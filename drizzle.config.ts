@@ -1,8 +1,14 @@
-import "dotenv/config";
+import { config } from "dotenv";
 import { defineConfig } from "drizzle-kit";
 
+// Next.js uses .env.local; drizzle-kit does not load it by default.
+config({ path: ".env.local" });
+config(); // optional .env fallback
+
 if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL is required for drizzle-kit.");
+  throw new Error(
+    "DATABASE_URL is required for drizzle-kit. Set it in studio/.env.local",
+  );
 }
 
 export default defineConfig({

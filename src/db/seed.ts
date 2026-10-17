@@ -1,5 +1,9 @@
-import "dotenv/config";
+import { config } from "dotenv";
 import { hashPassword } from "better-auth/crypto";
+
+config({ path: ".env.local" });
+config();
+
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { account, companySettings, documentTemplates, user } from "@/db/schema";
