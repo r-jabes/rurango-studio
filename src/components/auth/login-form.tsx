@@ -13,6 +13,9 @@ export function LoginForm() {
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [needsTwoFactor, setNeedsTwoFactor] = useState(
+    searchParams.get("twoFactor") === "1",
+  );
 
   const disabledError = searchParams.get("error") === "disabled";
 
@@ -23,8 +26,23 @@ export function LoginForm() {
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email") ?? "").trim();
     const password = String(form.get("password") ?? "");
+    const code = String(form.get("code") ?? "").trim();
 
     startTransition(async () => {
+      if (needsTwoFactor) {
+        const result = await authClient.twoFactor.verifyTotp({
+          code,
+        });
+        if (result.error) {
+          setError(result.error.message ?? "Invalid authentication code.");
+          return;
+        }
+        const next = searchParams.get("next");
+        router.replace(next && next.startsWith("/") ? next : "/");
+        router.refresh();
+        return;
+      }
+
       const result = await authClient.signIn.email({
         email,
         password,
@@ -32,6 +50,17 @@ export function LoginForm() {
 
       if (result.error) {
         setError(result.error.message ?? "Sign in failed.");
+        return;
+      }
+
+      // twoFactorClient may already redirect; if not, continue.
+      if (
+        result.data &&
+        typeof result.data === "object" &&
+        "twoFactorRedirect" in result.data &&
+        (result.data as { twoFactorRedirect?: boolean }).twoFactorRedirect
+      ) {
+        setNeedsTwoFactor(true);
         return;
       }
 
@@ -44,39 +73,60 @@ export function LoginForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {disabledError ? (
-        <StatusBanner tone="danger">
+        <StatusBanner tone="warning">
           This account is disabled. Contact the Studio owner.
         </StatusBanner>
       ) : null}
       {error ? <StatusBanner tone="danger">{error}</StatusBanner> : null}
+      {needsTwoFactor ? (
+        <StatusBanner tone="info">
+          Enter the code from your authenticator app to finish signing in.
+        </StatusBanner>
+      ) : null}
 
-      <div>
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="username"
-          required
-        />
-      </div>
-      <div>
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          minLength={8}
-        />
-      </div>
+      {!needsTwoFactor ? (
+        <>
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="username"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+            />
+          </div>
+        </>
+      ) : (
+        <div>
+          <Label htmlFor="code">Authentication code</Label>
+          <Input
+            id="code"
+            name="code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            required
+          />
+        </div>
+      )}
+
       <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? "Signing in…" : "Sign in"}
+        {pending
+          ? "Please wait…"
+          : needsTwoFactor
+            ? "Verify code"
+            : "Sign in"}
       </Button>
-      <p className="text-center text-xs text-foreground-muted">
-        Accounts are provisioned by the owner. Public registration is disabled.
-      </p>
     </form>
   );
 }

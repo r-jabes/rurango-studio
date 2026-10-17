@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { assertCmsContentToken } from "@/lib/cms/content-token";
+import { clientIpFromRequest, rateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
 import { listPublishedPortfolioProjects } from "@/server/cms/queries";
 
@@ -11,6 +12,22 @@ export const runtime = "nodejs";
  * Returns only status=published portfolio projects.
  */
 export async function GET(request: Request) {
+  const ip = clientIpFromRequest(request);
+  const limited = rateLimit({
+    key: `cms-public:${ip}`,
+    limit: 60,
+    windowMs: 60 * 1000,
+  });
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "Too many requests." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limited.retryAfterSec) },
+      },
+    );
+  }
+
   const auth = assertCmsContentToken(request);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

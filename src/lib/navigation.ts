@@ -58,11 +58,11 @@ export const primaryNav: NavItem[] = [
   {
     href: "/backups",
     label: "Backups",
-    description: "Backup status and recovery tools.",
+    description: "Owner backup runs and recovery drills.",
   },
   {
     href: "/settings",
     label: "Settings",
-    description: "Company profile and Studio configuration.",
+    description: "Company profile, MFA, templates, and audit.",
   },
 ];

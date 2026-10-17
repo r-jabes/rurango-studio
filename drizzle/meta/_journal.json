@@ -43,6 +43,13 @@
       "when": 1760735000000,
       "tag": "0005_phase6_cms",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1760736000000,
+      "tag": "0006_phase7_settings_backups_mfa",
+      "breakpoints": true
     }
   ]
 }

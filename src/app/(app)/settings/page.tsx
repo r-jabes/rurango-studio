@@ -1,50 +1,69 @@
 import { TemplateForm } from "@/components/commercial/template-form";
+import { CompanySettingsForm } from "@/components/settings/company-settings-form";
+import { MfaPanel } from "@/components/settings/mfa-panel";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBanner } from "@/components/ui/status-banner";
-import { db } from "@/db";
 import { typeLabels } from "@/lib/commercial/meta";
 import { requireSession } from "@/lib/session";
 import { listAllTemplates } from "@/server/commercial/queries";
+import {
+  getCompanySettings,
+  listRecentAuditLogs,
+} from "@/server/settings/queries";
 
 export const metadata = { title: "Settings" };
 
 export default async function SettingsPage() {
   const session = await requireSession();
+  const role =
+    (session.user as typeof session.user & { role?: string }).role ?? "owner";
+  const twoFactorEnabled = Boolean(
+    (session.user as typeof session.user & { twoFactorEnabled?: boolean })
+      .twoFactorEnabled,
+  );
 
-  let settings:
-    | {
-        legalName: string;
-        tradingName: string;
-        defaultCurrency: string;
-        invoicePrefix: string;
-        quotationPrefix: string;
-        proposalPrefix: string;
-        agreementPrefix: string;
-      }
-    | null = null;
+  let settings: Awaited<ReturnType<typeof getCompanySettings>> | null = null;
   let settingsError: string | null = null;
   let templates: Awaited<ReturnType<typeof listAllTemplates>> = [];
+  let audit: Awaited<ReturnType<typeof listRecentAuditLogs>> = [];
 
   try {
-    settings = (await db.query.companySettings.findFirst()) ?? null;
+    settings = await getCompanySettings();
     templates = await listAllTemplates();
+    if (role === "owner") {
+      audit = await listRecentAuditLogs(25);
+    }
   } catch {
     settingsError =
       "Could not load company settings. Confirm DATABASE_URL and that migrations have been applied.";
   }
 
+  const settingsDefaults = {
+    legalName: settings?.legalName ?? "RURANGO",
+    tradingName: settings?.tradingName ?? "RURANGO",
+    defaultCurrency: settings?.defaultCurrency ?? "RWF",
+    taxId: settings?.taxId ?? null,
+    supportEmail: settings?.supportEmail ?? null,
+    addressJson: settings?.addressJson ?? null,
+    invoicePrefix: settings?.invoicePrefix ?? "INV",
+    quotationPrefix: settings?.quotationPrefix ?? "QUO",
+    proposalPrefix: settings?.proposalPrefix ?? "PRO",
+    agreementPrefix: settings?.agreementPrefix ?? "AGR",
+    uploadMaxBytes: settings?.uploadMaxBytes ?? 26_214_400,
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Settings"
-        description="Company profile, document numbering, and reusable commercial templates."
+        description="Company profile, MFA, document templates, and recent audit events."
       />
 
       <section className="rounded-xl border border-border bg-surface/50 p-5">
         <div className="mb-4 flex items-center gap-2">
           <h2 className="text-sm font-medium">Signed-in account</h2>
-          <Badge>{String(session.user.role ?? "owner")}</Badge>
+          <Badge>{String(role)}</Badge>
         </div>
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
           <div>
@@ -58,59 +77,34 @@ export default async function SettingsPage() {
         </dl>
       </section>
 
+      <section className="rounded-xl border border-border bg-surface/50 p-5">
+        <h2 className="mb-3 text-sm font-medium">Multi-factor authentication</h2>
+        <MfaPanel enabled={twoFactorEnabled} />
+      </section>
+
       {settingsError ? (
         <StatusBanner tone="warning">{settingsError}</StatusBanner>
-      ) : null}
-
-      {settings ? (
-        <section className="rounded-xl border border-border bg-surface/50 p-5">
-          <h2 className="mb-4 text-sm font-medium">Company</h2>
-          <dl className="grid gap-3 text-sm sm:grid-cols-2">
-            <div>
-              <dt className="text-foreground-muted">Legal name</dt>
-              <dd>{settings.legalName}</dd>
-            </div>
-            <div>
-              <dt className="text-foreground-muted">Trading name</dt>
-              <dd>{settings.tradingName}</dd>
-            </div>
-            <div>
-              <dt className="text-foreground-muted">Default currency</dt>
-              <dd>{settings.defaultCurrency}</dd>
-            </div>
-            <div>
-              <dt className="text-foreground-muted">Document prefixes</dt>
-              <dd className="font-mono text-xs">
-                {settings.proposalPrefix} / {settings.quotationPrefix} /{" "}
-                {settings.agreementPrefix} / {settings.invoicePrefix}
-              </dd>
-            </div>
-          </dl>
-          <p className="mt-4 text-xs text-foreground-muted">
-            Prefixes drive issued numbers (e.g. INV-2026-0001). Seed or update
-            the company_settings row to change them.
-          </p>
+      ) : (
+        <section className="space-y-4 rounded-xl border border-border bg-surface/50 p-5">
+          <h2 className="text-sm font-medium">Company</h2>
+          {!settings ? (
+            <StatusBanner tone="info">
+              No company settings row yet — saving creates one.
+            </StatusBanner>
+          ) : null}
+          <CompanySettingsForm defaults={settingsDefaults} />
         </section>
-      ) : !settingsError ? (
-        <StatusBanner tone="info">
-          No company settings row yet. Run{" "}
-          <code className="font-mono text-accent">npm run db:seed</code> in
-          development after migrations.
-        </StatusBanner>
-      ) : null}
+      )}
 
       {!settingsError ? (
         <section className="space-y-4 rounded-xl border border-border bg-surface/50 p-5">
           <div>
             <h2 className="text-sm font-medium">Document templates</h2>
             <p className="mt-1 text-xs text-foreground-muted">
-              Reusable defaults for proposals, quotations, agreements, invoices,
-              receipts, and handover notes.
+              Reusable defaults for commercial documents.
             </p>
           </div>
-
           <TemplateForm mode="create" />
-
           <ul className="space-y-4">
             {templates.map((template) => (
               <li
@@ -122,9 +116,6 @@ export default async function SettingsPage() {
                   <Badge tone={template.isActive ? "success" : "neutral"}>
                     {typeLabels[template.type]}
                   </Badge>
-                  {!template.isActive ? (
-                    <Badge tone="neutral">inactive</Badge>
-                  ) : null}
                 </div>
                 <TemplateForm
                   mode="edit"
@@ -141,6 +132,31 @@ export default async function SettingsPage() {
               </li>
             ))}
           </ul>
+        </section>
+      ) : null}
+
+      {role === "owner" ? (
+        <section className="rounded-xl border border-border bg-surface/50 p-5">
+          <h2 className="mb-3 text-sm font-medium">Recent audit events</h2>
+          {audit.length === 0 ? (
+            <p className="text-sm text-foreground-muted">No audit events yet.</p>
+          ) : (
+            <ul className="space-y-2 text-sm">
+              {audit.map((row) => (
+                <li
+                  key={row.id}
+                  className="border-t border-border pt-2 first:border-0 first:pt-0"
+                >
+                  <p className="font-medium">{row.action}</p>
+                  <p className="text-xs text-foreground-muted">
+                    {row.createdAt.toLocaleString()}
+                    {row.entityType ? ` · ${row.entityType}` : ""}
+                    {row.entityId ? ` · ${row.entityId}` : ""}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       ) : null}
     </div>
