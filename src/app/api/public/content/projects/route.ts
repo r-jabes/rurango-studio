@@ -4,8 +4,6 @@ import { clientIpFromRequest, rateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
 import { listPublishedPortfolioProjects } from "@/server/cms/queries";
 
-export const runtime = "nodejs";
-
 /**
  * Read-only publish contract for the public portfolio.
  * Auth: Authorization: Bearer <CMS_CONTENT_TOKEN>

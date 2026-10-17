@@ -5,6 +5,11 @@ type Bucket = {
 
 const buckets = new Map<string, Bucket>();
 
+/** Clear in-memory buckets (unit tests / single-instance warm restarts). */
+export function resetRateLimitBuckets() {
+  buckets.clear();
+}
+
 /**
  * Simple in-process rate limiter.
  * Adequate for single-instance Studio; use Redis/Upstash for multi-instance.

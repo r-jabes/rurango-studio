@@ -5,8 +5,6 @@ import { runBackup, type BackupKind } from "@/lib/backups/runner";
 import { clientIpFromRequest, rateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
 
-export const runtime = "nodejs";
-
 /**
  * Cron / automation entrypoint for backups.
  * Auth: x-backup-cron-secret must match BACKUP_CRON_SECRET.

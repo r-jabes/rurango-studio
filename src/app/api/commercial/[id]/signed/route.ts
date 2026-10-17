@@ -8,8 +8,6 @@ import { logger } from "@/lib/logger";
 
 type Params = Promise<{ id: string }>;
 
-export const runtime = "nodejs";
-
 export async function GET(
   _request: Request,
   context: { params: Params },

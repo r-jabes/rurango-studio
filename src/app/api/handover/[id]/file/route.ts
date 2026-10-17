@@ -8,8 +8,6 @@ import { getStorage } from "@/lib/storage";
 
 type Params = Promise<{ id: string }>;
 
-export const runtime = "nodejs";
-
 export async function GET(
   _request: Request,
   context: { params: Params },

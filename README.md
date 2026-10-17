@@ -7,7 +7,8 @@ Internal business management application for RURANGO. Deploy on a dedicated subd
 - Next.js 16 (App Router) + React 19 + TypeScript
 - Tailwind CSS v4 (RURANGO brand tokens)
 - PostgreSQL + Drizzle ORM
-- Better Auth (email/password, public signup disabled)
+- Better Auth (email/password + optional MFA; public signup disabled)
+- Vitest unit tests; optional Playwright smoke
 
 ## Setup
 
@@ -41,20 +42,21 @@ Do not use real client data in seeds.
 | `npm run dev` | Local app on port 3001 |
 | `npm run build` / `start` | Production build |
 | `npm run lint` / `typecheck` | Quality checks |
+| `npm test` | Vitest unit suite |
+| `npm run test:e2e` | Playwright smoke (needs `STUDIO_E2E_BASE_URL`) |
+| `npm run check` | typecheck + lint + test |
 | `npm run db:generate` | Generate migrations from schema |
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Dev-only owner + company settings |
 
+## Documentation
+
+- `docs/RELEASE.md` — deploy and release checklist
+- `docs/RECOVERY.md` — backups and restore drills
+- `../docs/09-RURANGO-STUDIO-IMPLEMENTATION-PLAN.md` — architecture and phases
+
 ## Current status
 
-### Phase 1
-Auth, admin shell, section routes, shared UI, auth/settings schema.
+Phases **1–8** are implemented: CRM, vault, commercial docs, finance/delivery, CMS publish path, MFA/rate limits/backups, and hardening tests + release docs.
 
-### Phase 2
-Clients and projects with create/view/edit/archive, search/filter/pagination, milestones, tasks, notes, and activity timeline. Public signup remains disabled; server actions require owner/member roles.
-
-### Phase 3
-Private document vault with categories, tags, client/project links, version history, authorized download/preview routes, and soft archive (no hard delete UI). Defaults to `STORAGE_DRIVER=local` under `.data/vault` for development; use `s3` with R2/S3 for production.
-
-### Later
-Commercial documents (4), finance/delivery (5), CMS (6), MFA/backups (7).
+Portfolio integrity: Studio never serves vault files from `web/public`. CMS content reaches the portfolio only through the authenticated public content API and the portfolio `content:pull` job.

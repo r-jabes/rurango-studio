@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Studio is session + DB heavy; Cache Components prerender rules fight
+  // authenticated admin routes. Keep the portfolio (`web/`) on Cache Components.
   experimental: {
     serverActions: {
       bodySizeLimit: "30mb",
