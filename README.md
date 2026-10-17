@@ -45,19 +45,13 @@ Do not use real client data in seeds.
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Dev-only owner + company settings |
 
-## Phase 1 status
+## Current status
 
-Working:
+### Phase 1
+Auth, admin shell, section routes, shared UI, auth/settings schema.
 
-- Auth (sign in / sign out), middleware cookie gate, server session checks
-- Admin shell (sidebar + top bar)
-- Section routes with honest empty states
-- Shared UI primitives (forms, table shell, confirm dialog, badges, document preview placeholder)
-- DB schema for auth, company settings, audit log stub
-- Structured logging with secret scrubbing
+### Phase 2
+Clients and projects with create/view/edit/archive, search/filter/pagination, milestones, tasks, notes, and activity timeline. Public signup remains disabled; server actions require owner/member roles.
 
-Not in Phase 1:
-
-- Client/project CRUD (Phase 2)
-- Document vault (Phase 3)
-- Commercial documents / finance / CMS / MFA / backups (Phases 4–7)
+### Later
+Document vault (3), commercial documents (4), finance/delivery (5), CMS (6), MFA/backups (7).
