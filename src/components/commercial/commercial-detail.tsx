@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { DocumentActions } from "@/components/commercial/document-actions";
+import { DeletePaymentButton } from "@/components/finance/delete-payment-button";
+import { PaymentForm } from "@/components/finance/payment-form";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button-link";
 import { PageHeader } from "@/components/ui/page-header";
@@ -11,9 +14,10 @@ import {
   typeRoutes,
   type PrimaryCommercialType,
 } from "@/lib/commercial/meta";
+import { balanceTone } from "@/lib/finance/balances";
 import { formatMoney, minorToMajorString } from "@/lib/money";
 import { getCommercialDocument } from "@/server/commercial/queries";
-import { notFound } from "next/navigation";
+import { getInvoicePaymentSummary } from "@/server/finance/queries";
 
 export async function CommercialDetailPage({
   type,
@@ -27,6 +31,8 @@ export async function CommercialDetailPage({
 
   const base = typeRoutes[type];
   const snapshot = doc.snapshotJson;
+  const paymentSummary =
+    type === "invoice" ? await getInvoicePaymentSummary(id) : null;
 
   return (
     <div className="space-y-6">
@@ -223,6 +229,81 @@ export async function CommercialDetailPage({
           hasSignedCopy={Boolean(doc.signedFileStorageKey)}
         />
       </div>
+
+      {paymentSummary ? (
+        <section className="grid gap-6 lg:grid-cols-2">
+          <div className="rounded-md border border-border bg-surface p-4">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground-secondary">
+                Balance
+              </h2>
+              <Badge tone={balanceTone(paymentSummary.status)}>
+                {paymentSummary.status}
+              </Badge>
+            </div>
+            <dl className="grid gap-2 text-sm sm:grid-cols-3">
+              <div>
+                <dt className="text-foreground-secondary">Invoice total</dt>
+                <dd className="font-medium">
+                  {formatMoney(doc.totalMinor, doc.currency)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-foreground-secondary">Collected</dt>
+                <dd className="font-medium">
+                  {formatMoney(paymentSummary.paidMinor, doc.currency)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-foreground-secondary">Outstanding</dt>
+                <dd className="font-medium">
+                  {formatMoney(paymentSummary.outstandingMinor, doc.currency)}
+                </dd>
+              </div>
+            </dl>
+            <ul className="mt-4 space-y-2 border-t border-border pt-4 text-sm">
+              {paymentSummary.payments.length === 0 ? (
+                <li className="text-foreground-muted">No payments recorded.</li>
+              ) : (
+                paymentSummary.payments.map((payment) => (
+                  <li
+                    key={payment.id}
+                    className="flex items-center justify-between gap-3"
+                  >
+                    <span>
+                      {payment.paidOn} ·{" "}
+                      {formatMoney(payment.amountMinor, payment.currency)}
+                      {payment.method ? ` · ${payment.method}` : ""}
+                    </span>
+                    <DeletePaymentButton paymentId={payment.id} />
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
+          {doc.status !== "draft" && doc.status !== "void" ? (
+            <div className="rounded-md border border-border bg-surface p-4">
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-foreground-secondary">
+                Record payment
+              </h2>
+              <PaymentForm
+                defaultInvoiceId={doc.id}
+                invoices={[
+                  {
+                    id: doc.id,
+                    number: doc.number,
+                    title: doc.title,
+                    totalMinor: doc.totalMinor,
+                    currency: doc.currency,
+                    outstandingMinor: paymentSummary.outstandingMinor,
+                    client: { name: doc.client.name },
+                  },
+                ]}
+              />
+            </div>
+          ) : null}
+        </section>
+      ) : null}
     </div>
   );
 }

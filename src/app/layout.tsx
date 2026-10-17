@@ -24,6 +24,11 @@ export const metadata: Metadata = {
     template: "%s · Rurango Studio",
   },
   description: "Internal business management for RURANGO.",
+  applicationName: "Rurango Studio",
+  icons: {
+    icon: [{ url: "/icons/app_icon.png", type: "image/png" }],
+    apple: [{ url: "/icons/app_icon.png", type: "image/png" }],
+  },
   robots: {
     index: false,
     follow: false,

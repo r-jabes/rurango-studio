@@ -48,7 +48,7 @@ export const primaryNav: NavItem[] = [
   {
     href: "/payments",
     label: "Payments",
-    description: "Recorded payments against invoices.",
+    description: "Payments, outstanding balances, and AR summary.",
   },
   {
     href: "/content",

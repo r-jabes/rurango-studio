@@ -5,18 +5,28 @@ import { PageHeader } from "@/components/ui/page-header";
 import { StatusBanner } from "@/components/ui/status-banner";
 import { db } from "@/db";
 import { clients, projects } from "@/db/schema";
+import { formatMoney } from "@/lib/money";
 import { primaryNav } from "@/lib/navigation";
 import { requireSession } from "@/lib/session";
+import { getArSummary } from "@/server/finance/queries";
 
 export default async function DashboardPage() {
   const session = await requireSession();
 
   let activeClients: number | null = null;
   let openProjects: number | null = null;
+  let ar:
+    | {
+        outstandingMinor: number;
+        collectedMinor: number;
+        openCount: number;
+        currency: string;
+      }
+    | null = null;
   let loadError: string | null = null;
 
   try {
-    const [clientCount, projectCount] = await Promise.all([
+    const [clientCount, projectCount, arSummary] = await Promise.all([
       db
         .select({ value: count() })
         .from(clients)
@@ -25,9 +35,11 @@ export default async function DashboardPage() {
         .select({ value: count() })
         .from(projects)
         .where(ne(projects.status, "archived")),
+      getArSummary(),
     ]);
     activeClients = clientCount[0]?.value ?? 0;
     openProjects = projectCount[0]?.value ?? 0;
+    ar = arSummary;
   } catch {
     loadError =
       "Could not load live counts. Confirm the database is migrated and reachable.";
@@ -43,7 +55,7 @@ export default async function DashboardPage() {
       {loadError ? (
         <StatusBanner tone="warning">{loadError}</StatusBanner>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-xl border border-border bg-surface/50 p-5">
             <p className="text-xs uppercase tracking-wide text-foreground-muted">
               Active clients
@@ -58,6 +70,25 @@ export default async function DashboardPage() {
             </p>
             <p className="mt-2 text-3xl font-semibold tabular-nums">
               {openProjects}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-surface/50 p-5">
+            <p className="text-xs uppercase tracking-wide text-foreground-muted">
+              Accounts receivable
+            </p>
+            <p className="mt-2 text-3xl font-semibold tabular-nums">
+              {ar ? formatMoney(ar.outstandingMinor, ar.currency) : "—"}
+            </p>
+            <p className="mt-1 text-xs text-foreground-secondary">
+              {ar?.openCount ?? 0} open
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-surface/50 p-5">
+            <p className="text-xs uppercase tracking-wide text-foreground-muted">
+              Collected
+            </p>
+            <p className="mt-2 text-3xl font-semibold tabular-nums">
+              {ar ? formatMoney(ar.collectedMinor, ar.currency) : "—"}
             </p>
           </div>
         </div>

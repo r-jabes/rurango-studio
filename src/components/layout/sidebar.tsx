@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { primaryNav } from "@/lib/navigation";
@@ -24,11 +25,21 @@ export function Sidebar({ mobileOpen, onNavigate }: SidebarProps) {
         <Link
           href="/"
           onClick={onNavigate}
-          className="font-semibold tracking-tight text-foreground"
+          className="flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
-          Rurango <span className="text-accent">Studio</span>
+          <Image
+            src="/icons/light_logo.png"
+            alt="RURANGO"
+            width={120}
+            height={28}
+            className="h-7 w-auto"
+            priority
+          />
+          <span className="text-xs font-medium uppercase tracking-[0.14em] text-accent">
+            Studio
+          </span>
         </Link>
-        <p className="mt-1 text-xs text-foreground-muted">Internal operations</p>
+        <p className="mt-2 text-xs text-foreground-muted">Internal operations</p>
       </div>
       <nav aria-label="Primary" className="flex-1 overflow-y-auto p-3">
         <ul className="space-y-1">
