@@ -15,6 +15,13 @@
       "when": 1760731000000,
       "tag": "0001_phase2_crm",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1760732000000,
+      "tag": "0002_phase3_documents",
+      "breakpoints": true
     }
   ]
 }

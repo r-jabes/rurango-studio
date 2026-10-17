@@ -53,5 +53,8 @@ Auth, admin shell, section routes, shared UI, auth/settings schema.
 ### Phase 2
 Clients and projects with create/view/edit/archive, search/filter/pagination, milestones, tasks, notes, and activity timeline. Public signup remains disabled; server actions require owner/member roles.
 
+### Phase 3
+Private document vault with categories, tags, client/project links, version history, authorized download/preview routes, and soft archive (no hard delete UI). Defaults to `STORAGE_DRIVER=local` under `.data/vault` for development; use `s3` with R2/S3 for production.
+
 ### Later
-Document vault (3), commercial documents (4), finance/delivery (5), CMS (6), MFA/backups (7).
+Commercial documents (4), finance/delivery (5), CMS (6), MFA/backups (7).
