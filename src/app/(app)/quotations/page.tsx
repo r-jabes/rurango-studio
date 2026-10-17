@@ -1,13 +1,11 @@
-import { SectionPlaceholder } from "@/components/sections/section-placeholder";
+import { CommercialListPage } from "@/components/commercial/commercial-list-page";
 
 export const metadata = { title: "Quotations" };
 
-export default function QuotationsPage() {
-  return (
-    <SectionPlaceholder
-      title="Quotations"
-      description="Quotations with line items, tax, and expiry."
-      phaseNote="Commercial document workflows ship in Phase 4."
-    />
-  );
+export default function QuotationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
+}) {
+  return <CommercialListPage type="quotation" searchParams={searchParams} />;
 }

@@ -2,7 +2,7 @@ import "dotenv/config";
 import { hashPassword } from "better-auth/crypto";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { account, companySettings, user } from "@/db/schema";
+import { account, companySettings, documentTemplates, user } from "@/db/schema";
 import { isDevelopmentApp } from "@/lib/env";
 import { logger } from "@/lib/logger";
 
@@ -73,6 +73,45 @@ async function seed() {
     logger.info("Inserted default company settings");
   } else {
     logger.info("Company settings already present; skipping");
+  }
+
+  const templateCount = await db.query.documentTemplates.findMany({
+    columns: { id: true },
+    limit: 1,
+  });
+  if (templateCount.length === 0) {
+    await db.insert(documentTemplates).values([
+      {
+        type: "proposal",
+        name: "Standard proposal",
+        defaultPaymentTerms: "50% to start, balance on delivery",
+        defaultNotes: "Valid for 14 days unless otherwise stated.",
+        bodyHtml:
+          "Scope, timeline, and responsibilities will be confirmed before kickoff.",
+      },
+      {
+        type: "quotation",
+        name: "Standard quotation",
+        defaultPaymentTerms: "Net 14",
+        defaultNotes: "Prices exclude third-party fees unless listed.",
+      },
+      {
+        type: "agreement",
+        name: "Standard agreement",
+        defaultPaymentTerms: "As specified in the payment schedule",
+        defaultNotes:
+          "Upload a wet-ink or countersigned PDF under signed copy after issue.",
+      },
+      {
+        type: "invoice",
+        name: "Standard invoice",
+        defaultPaymentTerms: "Due on receipt",
+        defaultNotes: "Thank you for your business.",
+      },
+    ]);
+    logger.info("Inserted default commercial templates");
+  } else {
+    logger.info("Templates already present; skipping");
   }
 }
 

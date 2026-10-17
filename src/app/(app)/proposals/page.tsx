@@ -1,13 +1,11 @@
-import { SectionPlaceholder } from "@/components/sections/section-placeholder";
+import { CommercialListPage } from "@/components/commercial/commercial-list-page";
 
 export const metadata = { title: "Proposals" };
 
-export default function ProposalsPage() {
-  return (
-    <SectionPlaceholder
-      title="Proposals"
-      description="Proposal drafts, issued snapshots, and client relationships."
-      phaseNote="Templates, numbering, and PDF export ship in Phase 4."
-    />
-  );
+export default function ProposalsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
+}) {
+  return <CommercialListPage type="proposal" searchParams={searchParams} />;
 }

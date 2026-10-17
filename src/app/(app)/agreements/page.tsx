@@ -1,13 +1,11 @@
-import { SectionPlaceholder } from "@/components/sections/section-placeholder";
+import { CommercialListPage } from "@/components/commercial/commercial-list-page";
 
 export const metadata = { title: "Agreements" };
 
-export default function AgreementsPage() {
-  return (
-    <SectionPlaceholder
-      title="Agreements"
-      description="Agreements and uploaded signed copies with signing metadata."
-      phaseNote="Immutable issued snapshots and signed uploads ship in Phase 4. Electronic signature providers are not claimed until implemented."
-    />
-  );
+export default function AgreementsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
+}) {
+  return <CommercialListPage type="agreement" searchParams={searchParams} />;
 }
