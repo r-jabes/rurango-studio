@@ -53,7 +53,7 @@ export const primaryNav: NavItem[] = [
   {
     href: "/content",
     label: "Content",
-    description: "Portfolio and marketing content drafts.",
+    description: "CMS drafts and publish workflow for the portfolio.",
   },
   {
     href: "/backups",
