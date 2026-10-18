@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { NavIcon } from "@/components/layout/nav-icons";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 
@@ -20,15 +21,15 @@ export function Topbar({ userName, userEmail, onMenuClick }: TopbarProps) {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur md:px-6">
+    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur md:px-6">
       <Button
         variant="ghost"
         size="sm"
-        className="lg:hidden"
+        className="h-9 w-9 shrink-0 px-0 lg:hidden"
         onClick={onMenuClick}
         aria-label="Open navigation"
       >
-        Menu
+        <NavIcon name="menu" className="h-5 w-5" />
       </Button>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-foreground">{userName}</p>

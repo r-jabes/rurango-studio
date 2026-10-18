@@ -5,12 +5,15 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { StatusBanner } from "@/components/ui/status-banner";
+import { useToast } from "@/components/ui/toast";
 import { authClient } from "@/lib/auth-client";
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const toast = useToast();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [needsTwoFactor, setNeedsTwoFactor] = useState(
@@ -34,9 +37,13 @@ export function LoginForm() {
           code,
         });
         if (result.error) {
-          setError(result.error.message ?? "Invalid authentication code.");
+          const message =
+            result.error.message ?? "Invalid authentication code.";
+          setError(message);
+          toast.error(message, "Verification failed");
           return;
         }
+        toast.success("Signed in.", "Welcome");
         const next = searchParams.get("next");
         router.replace(next && next.startsWith("/") ? next : "/");
         router.refresh();
@@ -49,7 +56,9 @@ export function LoginForm() {
       });
 
       if (result.error) {
-        setError(result.error.message ?? "Sign in failed.");
+        const message = result.error.message ?? "Sign in failed.";
+        setError(message);
+        toast.error(message, "Sign in failed");
         return;
       }
 
@@ -61,9 +70,11 @@ export function LoginForm() {
         (result.data as { twoFactorRedirect?: boolean }).twoFactorRedirect
       ) {
         setNeedsTwoFactor(true);
+        toast.info("Enter your authenticator code to continue.", "MFA required");
         return;
       }
 
+      toast.success("Signed in.", "Welcome");
       const next = searchParams.get("next");
       router.replace(next && next.startsWith("/") ? next : "/");
       router.refresh();
@@ -98,10 +109,9 @@ export function LoginForm() {
           </div>
           <div>
             <Label htmlFor="password">Password</Label>
-            <Input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               autoComplete="current-password"
               required
             />
@@ -120,7 +130,7 @@ export function LoginForm() {
         </div>
       )}
 
-      <Button type="submit" className="w-full" disabled={pending}>
+      <Button type="submit" className="w-full" loading={pending}>
         {pending
           ? "Please wait…"
           : needsTwoFactor

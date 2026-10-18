@@ -1,9 +1,11 @@
 import type { ButtonHTMLAttributes } from "react";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/cn";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "secondary" | "ghost" | "danger";
   size?: "sm" | "md" | "lg";
+  loading?: boolean;
 };
 
 const variants = {
@@ -27,11 +29,16 @@ export function Button({
   variant = "primary",
   size = "md",
   type = "button",
+  loading = false,
+  disabled,
+  children,
   ...props
 }: ButtonProps) {
   return (
     <button
       type={type}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
       className={cn(
         "inline-flex cursor-pointer items-center justify-center gap-2 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed",
         variants[variant],
@@ -39,6 +46,9 @@ export function Button({
         className,
       )}
       {...props}
-    />
+    >
+      {loading ? <Spinner className="text-current" /> : null}
+      {children}
+    </button>
   );
 }

@@ -1,14 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { StatusBanner } from "@/components/ui/status-banner";
 import { Textarea } from "@/components/ui/textarea";
-import type { FieldErrors } from "@/lib/action-result";
+import { useActionFeedback } from "@/lib/use-action-feedback";
 import {
   createClientAction,
   updateClientAction,
@@ -27,46 +24,32 @@ type ClientFormProps = {
 };
 
 export function ClientForm({ mode, clientId, defaults }: ClientFormProps) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const { pending, fieldErrors, run, router } = useActionFeedback();
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    setMessage(null);
-    setError(null);
-    setFieldErrors({});
 
-    startTransition(async () => {
-      const result =
+    run(
+      () =>
         mode === "create"
-          ? await createClientAction(formData)
-          : await updateClientAction(clientId!, formData);
-
-      if (!result.ok) {
-        setError(result.message);
-        setFieldErrors(result.fieldErrors ?? {});
-        return;
-      }
-
-      setMessage(result.message ?? "Saved.");
-      if (mode === "create" && result.data?.id) {
-        router.push(`/clients/${result.data.id}`);
-        router.refresh();
-        return;
-      }
-      router.refresh();
-    });
+          ? createClientAction(formData)
+          : updateClientAction(clientId!, formData),
+      {
+        successTitle: mode === "create" ? "Client created" : "Client updated",
+        refresh: mode !== "create",
+        onSuccess: (result) => {
+          if (mode === "create" && result.data && typeof result.data === "object" && "id" in result.data) {
+            router.push(`/clients/${String((result.data as { id: string }).id)}`);
+            router.refresh();
+          }
+        },
+      },
+    );
   }
 
   return (
     <form onSubmit={onSubmit} className="max-w-xl space-y-4">
-      {error ? <StatusBanner tone="danger">{error}</StatusBanner> : null}
-      {message ? <StatusBanner tone="success">{message}</StatusBanner> : null}
-
       <div>
         <Label htmlFor="name">Name</Label>
         <Input id="name" name="name" required defaultValue={defaults?.name} />
@@ -111,8 +94,12 @@ export function ClientForm({ mode, clientId, defaults }: ClientFormProps) {
         />
         <FieldError errors={fieldErrors.notes} />
       </div>
-      <Button type="submit" disabled={pending}>
-        {pending ? "Saving…" : mode === "create" ? "Create client" : "Save changes"}
+      <Button type="submit" loading={pending}>
+        {pending
+          ? "Saving…"
+          : mode === "create"
+            ? "Create client"
+            : "Save changes"}
       </Button>
     </form>
   );

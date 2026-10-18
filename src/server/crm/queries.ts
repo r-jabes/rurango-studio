@@ -82,7 +82,10 @@ export async function listProjects(options: {
   if (options.clientId) {
     filters.push(eq(projects.clientId, options.clientId));
   }
-  if (options.status && options.status !== "all") {
+  // "active-ish" means not archived — never pass it to the Postgres enum.
+  if (!options.status || options.status === "active-ish") {
+    filters.push(ne(projects.status, "archived"));
+  } else if (options.status !== "all") {
     filters.push(
       eq(
         projects.status,
@@ -94,8 +97,6 @@ export async function listProjects(options: {
           | "archived",
       ),
     );
-  } else if (!options.status || options.status === "active-ish") {
-    filters.push(ne(projects.status, "archived"));
   }
   if (q) {
     filters.push(

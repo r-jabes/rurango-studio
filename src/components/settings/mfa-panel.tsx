@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { StatusBanner } from "@/components/ui/status-banner";
 import { authClient } from "@/lib/auth-client";
 
@@ -97,9 +98,8 @@ export function MfaPanel({ enabled }: MfaPanelProps) {
 
       <div>
         <Label htmlFor="mfa-password">Account password</Label>
-        <Input
+        <PasswordInput
           id="mfa-password"
-          type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoComplete="current-password"

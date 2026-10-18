@@ -1,13 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { StatusBanner } from "@/components/ui/status-banner";
-import type { FieldErrors } from "@/lib/action-result";
+import { useActionFeedback } from "@/lib/use-action-feedback";
 import { updateCompanySettingsAction } from "@/server/settings/actions";
 
 type CompanySettingsFormProps = {
@@ -27,36 +24,18 @@ type CompanySettingsFormProps = {
 };
 
 export function CompanySettingsForm({ defaults }: CompanySettingsFormProps) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const { pending, fieldErrors, run } = useActionFeedback();
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    setMessage(null);
-    setError(null);
-    setFieldErrors({});
-
-    startTransition(async () => {
-      const result = await updateCompanySettingsAction(formData);
-      if (!result.ok) {
-        setError(result.message);
-        setFieldErrors(result.fieldErrors ?? {});
-        return;
-      }
-      setMessage(result.message ?? "Saved.");
-      router.refresh();
+    run(() => updateCompanySettingsAction(formData), {
+      successTitle: "Settings saved",
     });
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      {error ? <StatusBanner tone="danger">{error}</StatusBanner> : null}
-      {message ? <StatusBanner tone="success">{message}</StatusBanner> : null}
-
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <Label htmlFor="legalName">Legal name</Label>
@@ -177,7 +156,7 @@ export function CompanySettingsForm({ defaults }: CompanySettingsFormProps) {
         </div>
       </div>
 
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" loading={pending}>
         {pending ? "Saving…" : "Save company settings"}
       </Button>
     </form>

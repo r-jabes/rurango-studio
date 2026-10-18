@@ -101,7 +101,10 @@ export default async function DashboardPage() {
         </div>
         <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {primaryNav
-            .filter((item) => item.href !== "/")
+            .filter(
+              (item) =>
+                item.href !== "/" && !item.href.startsWith("/content/"),
+            )
             .map((item) => (
               <li key={item.href}>
                 <Link

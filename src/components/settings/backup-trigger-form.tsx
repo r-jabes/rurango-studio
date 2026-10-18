@@ -1,39 +1,24 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { StatusBanner } from "@/components/ui/status-banner";
+import { useActionFeedback } from "@/lib/use-action-feedback";
 import { triggerBackupAction } from "@/server/settings/actions";
 
 export function BackupTriggerForm() {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { pending, run } = useActionFeedback();
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    setMessage(null);
-    setError(null);
-    startTransition(async () => {
-      const result = await triggerBackupAction(formData);
-      if (!result.ok) {
-        setError(result.message);
-        return;
-      }
-      setMessage(result.message ?? "Backup completed.");
-      router.refresh();
+    run(() => triggerBackupAction(formData), {
+      successTitle: "Backup finished",
     });
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
-      {error ? <StatusBanner tone="danger">{error}</StatusBanner> : null}
-      {message ? <StatusBanner tone="success">{message}</StatusBanner> : null}
       <div>
         <Label htmlFor="kind">Backup kind</Label>
         <Select id="kind" name="kind" defaultValue="full">
@@ -42,7 +27,7 @@ export function BackupTriggerForm() {
           <option value="files">File inventory</option>
         </Select>
       </div>
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" loading={pending}>
         {pending ? "Running…" : "Run backup now"}
       </Button>
       <p className="text-xs text-foreground-muted">

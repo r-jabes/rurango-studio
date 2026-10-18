@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 
@@ -14,7 +15,7 @@ export function AppShell({ userName, userEmail, children }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-full bg-background text-foreground">
+    <div className="flex h-dvh overflow-hidden bg-background text-foreground">
       <Sidebar
         mobileOpen={mobileOpen}
         onNavigate={() => setMobileOpen(false)}
@@ -27,13 +28,16 @@ export function AppShell({ userName, userEmail, children }: AppShellProps) {
           onClick={() => setMobileOpen(false)}
         />
       ) : null}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Topbar
           userName={userName}
           userEmail={userEmail}
           onMenuClick={() => setMobileOpen(true)}
         />
-        <main className="flex-1 px-4 py-6 md:px-6 md:py-8">{children}</main>
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 md:px-6 md:py-8">
+          <Breadcrumbs />
+          {children}
+        </main>
       </div>
     </div>
   );

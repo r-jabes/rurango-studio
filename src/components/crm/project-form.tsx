@@ -1,15 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { StatusBanner } from "@/components/ui/status-banner";
 import { Textarea } from "@/components/ui/textarea";
-import type { FieldErrors } from "@/lib/action-result";
+import { useActionFeedback } from "@/lib/use-action-feedback";
 import {
   createProjectAction,
   updateProjectAction,
@@ -40,45 +37,37 @@ export function ProjectForm({
   clients,
   defaults,
 }: ProjectFormProps) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const { pending, fieldErrors, run, router } = useActionFeedback();
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    setMessage(null);
-    setError(null);
-    setFieldErrors({});
 
-    startTransition(async () => {
-      const result =
+    run(
+      () =>
         mode === "create"
-          ? await createProjectAction(formData)
-          : await updateProjectAction(projectId!, formData);
-
-      if (!result.ok) {
-        setError(result.message);
-        setFieldErrors(result.fieldErrors ?? {});
-        return;
-      }
-
-      setMessage(result.message ?? "Saved.");
-      if (mode === "create" && result.data?.id) {
-        router.push(`/projects/${result.data.id}`);
-        router.refresh();
-        return;
-      }
-      router.refresh();
-    });
+          ? createProjectAction(formData)
+          : updateProjectAction(projectId!, formData),
+      {
+        successTitle: mode === "create" ? "Project created" : "Project updated",
+        refresh: mode !== "create",
+        onSuccess: (result) => {
+          if (
+            mode === "create" &&
+            result.data &&
+            typeof result.data === "object" &&
+            "id" in result.data
+          ) {
+            router.push(`/projects/${String((result.data as { id: string }).id)}`);
+            router.refresh();
+          }
+        },
+      },
+    );
   }
 
   return (
     <form onSubmit={onSubmit} className="max-w-2xl space-y-4">
-      {error ? <StatusBanner tone="danger">{error}</StatusBanner> : null}
-      {message ? <StatusBanner tone="success">{message}</StatusBanner> : null}
 
       <div>
         <Label htmlFor="clientId">Client</Label>
@@ -181,7 +170,7 @@ export function ProjectForm({
           />
         </div>
       </div>
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" loading={pending}>
         {pending
           ? "Saving…"
           : mode === "create"
