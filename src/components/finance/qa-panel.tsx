@@ -1,12 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { StatusBanner } from "@/components/ui/status-banner";
+import { useActionFeedback } from "@/lib/use-action-feedback";
 import {
   addQaItemAction,
   createQaChecklistAction,
@@ -25,35 +23,31 @@ type QaPanelProps = {
 };
 
 export function QaPanel({ projectId, milestones, checklists }: QaPanelProps) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const { pending, run } = useActionFeedback();
 
   return (
     <div className="space-y-5">
-      {error ? <StatusBanner tone="danger">{error}</StatusBanner> : null}
-
       <form
         className="space-y-3 border-b border-border pb-4"
         onSubmit={(event) => {
           event.preventDefault();
-          const formData = new FormData(event.currentTarget);
+          const form = event.currentTarget;
+          const formData = new FormData(form);
           formData.set("projectId", projectId);
-          setError(null);
-          startTransition(async () => {
-            const result = await createQaChecklistAction(formData);
-            if (!result.ok) {
-              setError(result.message);
-              return;
-            }
-            event.currentTarget.reset();
-            router.refresh();
+          run(() => createQaChecklistAction(formData), {
+            successTitle: "Checklist added",
+            onSuccess: () => form.reset(),
           });
         }}
       >
         <Label htmlFor="qa-title">New checklist</Label>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Input id="qa-title" name="title" required placeholder="Launch checklist" />
+          <Input
+            id="qa-title"
+            name="title"
+            required
+            placeholder="Launch checklist"
+          />
           <Select name="milestoneId" defaultValue="" className="sm:w-48">
             <option value="">No milestone</option>
             {milestones.map((m) => (
@@ -62,7 +56,7 @@ export function QaPanel({ projectId, milestones, checklists }: QaPanelProps) {
               </option>
             ))}
           </Select>
-          <Button type="submit" size="sm" disabled={pending}>
+          <Button type="submit" size="sm" loading={pending}>
             Add
           </Button>
         </div>
@@ -89,14 +83,19 @@ export function QaPanel({ projectId, milestones, checklists }: QaPanelProps) {
                       type="checkbox"
                       checked={item.isDone}
                       disabled={pending}
-                      onChange={() => {
-                        startTransition(async () => {
-                          await toggleQaItemAction(item.id);
-                          router.refresh();
-                        });
-                      }}
+                      onChange={() =>
+                        run(() => toggleQaItemAction(item.id), {
+                          successTitle: item.isDone
+                            ? "Item reopened"
+                            : "Item completed",
+                        })
+                      }
                     />
-                    <span className={item.isDone ? "text-foreground-muted line-through" : ""}>
+                    <span
+                      className={
+                        item.isDone ? "text-foreground-muted line-through" : ""
+                      }
+                    >
                       {item.title}
                     </span>
                   </li>
@@ -106,21 +105,27 @@ export function QaPanel({ projectId, milestones, checklists }: QaPanelProps) {
                 className="flex gap-2"
                 onSubmit={(event) => {
                   event.preventDefault();
-                  const formData = new FormData(event.currentTarget);
+                  const form = event.currentTarget;
+                  const formData = new FormData(form);
                   formData.set("checklistId", checklist.id);
-                  startTransition(async () => {
-                    const result = await addQaItemAction(formData);
-                    if (!result.ok) {
-                      setError(result.message);
-                      return;
-                    }
-                    event.currentTarget.reset();
-                    router.refresh();
+                  run(() => addQaItemAction(formData), {
+                    successTitle: "Item added",
+                    onSuccess: () => form.reset(),
                   });
                 }}
               >
-                <Input name="title" required placeholder="Add item" className="flex-1" />
-                <Button type="submit" size="sm" variant="secondary" disabled={pending}>
+                <Input
+                  name="title"
+                  required
+                  placeholder="Add item"
+                  className="flex-1"
+                />
+                <Button
+                  type="submit"
+                  size="sm"
+                  variant="secondary"
+                  loading={pending}
+                >
                   Add item
                 </Button>
               </form>

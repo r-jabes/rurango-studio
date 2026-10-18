@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import {
   LineItemsEditor,
   type LineItemDraft,
@@ -11,14 +10,13 @@ import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { StatusBanner } from "@/components/ui/status-banner";
 import { Textarea } from "@/components/ui/textarea";
-import type { FieldErrors } from "@/lib/action-result";
 import {
   typeLabels,
   typeRoutes,
   type PrimaryCommercialType,
 } from "@/lib/commercial/meta";
+import { useActionFeedback } from "@/lib/use-action-feedback";
 import { minorToMajorString } from "@/lib/money";
 import {
   createCommercialDocumentAction,
@@ -73,11 +71,7 @@ export function CommercialDocForm({
   defaultCurrency,
   defaults,
 }: CommercialDocFormProps) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const { pending, fieldErrors, run, router } = useActionFeedback();
   const [clientId, setClientId] = useState(defaults?.clientId ?? "");
   const [currency, setCurrency] = useState(
     defaults?.currency ?? defaultCurrency,
@@ -121,37 +115,37 @@ export function CommercialDocForm({
     formData.set("paymentTerms", paymentTerms);
     formData.set("notes", notes);
     formData.set("bodyHtml", bodyHtml);
-    setMessage(null);
-    setError(null);
-    setFieldErrors({});
 
-    startTransition(async () => {
-      const result =
+    run(
+      () =>
         mode === "create"
-          ? await createCommercialDocumentAction(formData)
-          : await updateCommercialDocumentAction(documentId!, formData);
-
-      if (!result.ok) {
-        setError(result.message);
-        setFieldErrors(result.fieldErrors ?? {});
-        return;
-      }
-
-      setMessage(result.message ?? "Saved.");
-      if (mode === "create" && result.data?.id) {
-        router.push(`${typeRoutes[type]}/${result.data.id}`);
-        router.refresh();
-        return;
-      }
-      router.refresh();
-    });
+          ? createCommercialDocumentAction(formData)
+          : updateCommercialDocumentAction(documentId!, formData),
+      {
+        successTitle:
+          mode === "create"
+            ? `${typeLabels[type]} created`
+            : `${typeLabels[type]} saved`,
+        refresh: mode !== "create",
+        onSuccess: (result) => {
+          if (
+            mode === "create" &&
+            result.data &&
+            typeof result.data === "object" &&
+            "id" in result.data
+          ) {
+            router.push(
+              `${typeRoutes[type]}/${String((result.data as { id: string }).id)}`,
+            );
+            router.refresh();
+          }
+        },
+      },
+    );
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
-      {error ? <StatusBanner tone="danger">{error}</StatusBanner> : null}
-      {message ? <StatusBanner tone="success">{message}</StatusBanner> : null}
-
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <Label htmlFor="title">Title</Label>
@@ -292,7 +286,7 @@ export function CommercialDocForm({
       />
       <FieldError errors={fieldErrors.lineItemsJson} />
 
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" loading={pending}>
         {pending
           ? "Saving…"
           : mode === "create"

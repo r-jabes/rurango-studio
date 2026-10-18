@@ -4,10 +4,12 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
-  useEffect,
+  useSyncExternalStore,
 } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
 
 export type ToastTone = "success" | "danger" | "info" | "warning";
@@ -40,8 +42,25 @@ const toneStyles: Record<ToastTone, string> = {
   warning: "border-amber-500/40 bg-amber-500/10 text-amber-100",
 };
 
+function subscribe() {
+  return () => undefined;
+}
+
+function getClientSnapshot() {
+  return true;
+}
+
+function getServerSnapshot() {
+  return false;
+}
+
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
+  const mounted = useSyncExternalStore(
+    subscribe,
+    getClientSnapshot,
+    getServerSnapshot,
+  );
 
   const dismiss = useCallback((id: string) => {
     setItems((current) => current.filter((item) => item.id !== id));
@@ -72,18 +91,26 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     [toast],
   );
 
+  const viewport =
+    mounted && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            className="pointer-events-none fixed inset-x-0 bottom-0 z-[200] flex max-h-[min(40vh,20rem)] flex-col items-end gap-2 overflow-y-auto overscroll-contain p-4 sm:p-6"
+            aria-live="polite"
+            aria-relevant="additions"
+          >
+            {items.map((item) => (
+              <ToastCard key={item.id} item={item} onDismiss={dismiss} />
+            ))}
+          </div>,
+          document.body,
+        )
+      : null;
+
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-[100] flex flex-col items-end gap-2 p-4 sm:p-6"
-        aria-live="polite"
-        aria-relevant="additions"
-      >
-        {items.map((item) => (
-          <ToastCard key={item.id} item={item} onDismiss={dismiss} />
-        ))}
-      </div>
+      {viewport}
     </ToastContext.Provider>
   );
 }
@@ -104,7 +131,7 @@ function ToastCard({
     <div
       role="status"
       className={cn(
-        "pointer-events-auto w-full max-w-sm rounded-lg border px-4 py-3 shadow-lg shadow-black/30 backdrop-blur",
+        "pointer-events-auto w-full max-w-sm shrink-0 rounded-lg border px-4 py-3 shadow-lg shadow-black/30 backdrop-blur",
         toneStyles[item.tone],
       )}
     >

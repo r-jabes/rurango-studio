@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
-import { StatusBanner } from "@/components/ui/status-banner";
+import { useToast } from "@/components/ui/toast";
 import { authClient } from "@/lib/auth-client";
 
 type MfaPanelProps = {
@@ -15,17 +15,14 @@ type MfaPanelProps = {
 
 export function MfaPanel({ enabled }: MfaPanelProps) {
   const router = useRouter();
+  const toast = useToast();
   const [pending, startTransition] = useTransition();
   const [password, setPassword] = useState("");
   const [totpCode, setTotpCode] = useState("");
   const [totpUri, setTotpUri] = useState<string | null>(null);
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   function enable() {
-    setError(null);
-    setMessage(null);
     startTransition(async () => {
       const result = await authClient.twoFactor.enable({
         password,
@@ -33,7 +30,7 @@ export function MfaPanel({ enabled }: MfaPanelProps) {
         issuer: "Rurango Studio",
       });
       if (result.error) {
-        setError(result.error.message ?? "Could not enable MFA.");
+        toast.error(result.error.message ?? "Could not enable MFA.");
         return;
       }
       const data = result.data as {
@@ -42,24 +39,23 @@ export function MfaPanel({ enabled }: MfaPanelProps) {
       } | null;
       setTotpUri(data?.totpURI ?? null);
       setBackupCodes(data?.backupCodes ?? []);
-      setMessage(
+      toast.info(
         "Scan the TOTP URI with your authenticator, then verify a code to finish.",
+        "Almost done",
       );
     });
   }
 
   function verify() {
-    setError(null);
-    setMessage(null);
     startTransition(async () => {
       const result = await authClient.twoFactor.verifyTotp({
         code: totpCode,
       });
       if (result.error) {
-        setError(result.error.message ?? "Invalid code.");
+        toast.error(result.error.message ?? "Invalid code.");
         return;
       }
-      setMessage("MFA enabled.");
+      toast.success("MFA enabled.", "Security");
       setPassword("");
       setTotpCode("");
       router.refresh();
@@ -67,17 +63,15 @@ export function MfaPanel({ enabled }: MfaPanelProps) {
   }
 
   function disable() {
-    setError(null);
-    setMessage(null);
     startTransition(async () => {
       const result = await authClient.twoFactor.disable({
         password,
       });
       if (result.error) {
-        setError(result.error.message ?? "Could not disable MFA.");
+        toast.error(result.error.message ?? "Could not disable MFA.");
         return;
       }
-      setMessage("MFA disabled.");
+      toast.success("MFA disabled.", "Security");
       setTotpUri(null);
       setBackupCodes([]);
       setPassword("");
@@ -93,8 +87,6 @@ export function MfaPanel({ enabled }: MfaPanelProps) {
           {enabled ? "Enabled" : "Not enabled"}
         </span>
       </p>
-      {error ? <StatusBanner tone="danger">{error}</StatusBanner> : null}
-      {message ? <StatusBanner tone="success">{message}</StatusBanner> : null}
 
       <div>
         <Label htmlFor="mfa-password">Account password</Label>
@@ -111,7 +103,8 @@ export function MfaPanel({ enabled }: MfaPanelProps) {
           <Button
             type="button"
             size="sm"
-            disabled={pending || password.length < 8}
+            loading={pending}
+            disabled={password.length < 8}
             onClick={enable}
           >
             Enable TOTP
@@ -122,7 +115,8 @@ export function MfaPanel({ enabled }: MfaPanelProps) {
           type="button"
           size="sm"
           variant="danger"
-          disabled={pending || password.length < 8}
+          loading={pending}
+          disabled={password.length < 8}
           onClick={disable}
         >
           Disable MFA
@@ -159,7 +153,8 @@ export function MfaPanel({ enabled }: MfaPanelProps) {
           <Button
             type="button"
             size="sm"
-            disabled={pending || totpCode.length < 6}
+            loading={pending}
+            disabled={totpCode.length < 6}
             onClick={verify}
           >
             Verify and activate

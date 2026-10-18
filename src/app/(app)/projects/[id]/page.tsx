@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button-link";
 import { PageHeader } from "@/components/ui/page-header";
 import { requireRole } from "@/lib/session";
-import { archiveProjectAction } from "@/server/crm/actions";
 import { getProjectById, listActivities } from "@/server/crm/queries";
 import {
   listDeploymentsForProject,
@@ -67,10 +66,12 @@ export default async function ProjectDetailPage({
             </ButtonLink>
             {project.status !== "archived" ? (
               <ArchiveButton
+                entity="project"
+                entityId={id}
+                mode="archive"
                 label="Archive"
                 confirmTitle="Archive this project?"
                 confirmDescription="Archived projects are hidden from the default project list."
-                action={() => archiveProjectAction(id)}
               />
             ) : null}
           </div>

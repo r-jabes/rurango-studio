@@ -1,15 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { StatusBanner } from "@/components/ui/status-banner";
 import { Textarea } from "@/components/ui/textarea";
-import type { FieldErrors } from "@/lib/action-result";
+import { useActionFeedback } from "@/lib/use-action-feedback";
 import { formatMoney } from "@/lib/money";
 import { recordPaymentAction } from "@/server/finance/actions";
 
@@ -29,11 +27,7 @@ type PaymentFormProps = {
 };
 
 export function PaymentForm({ invoices, defaultInvoiceId }: PaymentFormProps) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const { pending, fieldErrors, run } = useActionFeedback();
   const [invoiceId, setInvoiceId] = useState(defaultInvoiceId ?? "");
 
   const selected = useMemo(
@@ -43,31 +37,21 @@ export function PaymentForm({ invoices, defaultInvoiceId }: PaymentFormProps) {
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     if (selected) formData.set("currency", selected.currency);
-    setMessage(null);
-    setError(null);
-    setFieldErrors({});
 
-    startTransition(async () => {
-      const result = await recordPaymentAction(formData);
-      if (!result.ok) {
-        setError(result.message);
-        setFieldErrors(result.fieldErrors ?? {});
-        return;
-      }
-      setMessage(result.message ?? "Payment recorded.");
-      event.currentTarget.reset();
-      setInvoiceId(defaultInvoiceId ?? "");
-      router.refresh();
+    run(() => recordPaymentAction(formData), {
+      successTitle: "Payment recorded",
+      onSuccess: () => {
+        form.reset();
+        setInvoiceId(defaultInvoiceId ?? "");
+      },
     });
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      {error ? <StatusBanner tone="danger">{error}</StatusBanner> : null}
-      {message ? <StatusBanner tone="success">{message}</StatusBanner> : null}
-
       <div>
         <Label htmlFor="invoiceId">Invoice</Label>
         <Select
@@ -126,7 +110,11 @@ export function PaymentForm({ invoices, defaultInvoiceId }: PaymentFormProps) {
         </div>
         <div>
           <Label htmlFor="method">Method</Label>
-          <Input id="method" name="method" placeholder="Bank transfer, mobile money…" />
+          <Input
+            id="method"
+            name="method"
+            placeholder="Bank transfer, mobile money…"
+          />
         </div>
         <div>
           <Label htmlFor="reference">Reference</Label>
@@ -140,7 +128,7 @@ export function PaymentForm({ invoices, defaultInvoiceId }: PaymentFormProps) {
 
       <input type="hidden" name="currency" value={selected?.currency ?? "RWF"} />
 
-      <Button type="submit" disabled={pending || !invoiceId}>
+      <Button type="submit" loading={pending} disabled={!invoiceId}>
         {pending ? "Recording…" : "Record payment"}
       </Button>
     </form>

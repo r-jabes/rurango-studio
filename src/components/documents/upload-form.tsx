@@ -1,14 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { StatusBanner } from "@/components/ui/status-banner";
-import type { FieldErrors } from "@/lib/action-result";
+import { useActionFeedback } from "@/lib/use-action-feedback";
 import { createDocumentAction } from "@/server/documents/actions";
 
 type Option = { id: string; name: string };
@@ -20,10 +18,7 @@ type UploadFormProps = {
 };
 
 export function UploadForm({ categories, clients, projects }: UploadFormProps) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const { pending, fieldErrors, run, router } = useActionFeedback();
   const [clientId, setClientId] = useState("");
 
   const filteredProjects = clientId
@@ -33,27 +28,25 @@ export function UploadForm({ categories, clients, projects }: UploadFormProps) {
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    setError(null);
-    setFieldErrors({});
 
-    startTransition(async () => {
-      const result = await createDocumentAction(formData);
-      if (!result.ok) {
-        setError(result.message);
-        setFieldErrors(result.fieldErrors ?? {});
-        return;
-      }
-      if (result.data?.id) {
-        router.push(`/documents/${result.data.id}`);
-        router.refresh();
-      }
+    run(() => createDocumentAction(formData), {
+      successTitle: "Document uploaded",
+      refresh: false,
+      onSuccess: (result) => {
+        if (
+          result.data &&
+          typeof result.data === "object" &&
+          "id" in result.data
+        ) {
+          router.push(`/documents/${String((result.data as { id: string }).id)}`);
+          router.refresh();
+        }
+      },
     });
   }
 
   return (
     <form onSubmit={onSubmit} className="max-w-2xl space-y-4">
-      {error ? <StatusBanner tone="danger">{error}</StatusBanner> : null}
-
       <div>
         <Label htmlFor="title">Title</Label>
         <Input id="title" name="title" required />
@@ -126,7 +119,7 @@ export function UploadForm({ categories, clients, projects }: UploadFormProps) {
         />
       </div>
 
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" loading={pending}>
         {pending ? "Uploading…" : "Upload to vault"}
       </Button>
     </form>

@@ -1,11 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { StatusBanner } from "@/components/ui/status-banner";
 import { Textarea } from "@/components/ui/textarea";
 import type { CommercialDocStatus } from "@/lib/commercial/meta";
 import {
@@ -14,6 +12,7 @@ import {
   canRecordSignedCopy,
   canVoid,
 } from "@/lib/commercial/meta";
+import { useActionFeedback } from "@/lib/use-action-feedback";
 import {
   issueCommercialDocumentAction,
   markCommercialStatusAction,
@@ -34,39 +33,24 @@ export function DocumentActions({
   type,
   hasSignedCopy,
 }: DocumentActionsProps) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { pending, run } = useActionFeedback();
   const [voidReason, setVoidReason] = useState("");
-
-  function run(action: () => Promise<{ ok: boolean; message?: string }>) {
-    setMessage(null);
-    setError(null);
-    startTransition(async () => {
-      const result = await action();
-      if (!result.ok) {
-        setError(result.message ?? "Action failed.");
-        return;
-      }
-      setMessage(result.message ?? "Done.");
-      router.refresh();
-    });
-  }
 
   return (
     <div className="space-y-4 rounded-md border border-border bg-surface p-4">
       <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground-secondary">
         Actions
       </h2>
-      {error ? <StatusBanner tone="danger">{error}</StatusBanner> : null}
-      {message ? <StatusBanner tone="success">{message}</StatusBanner> : null}
 
       <div className="flex flex-wrap gap-2">
         {canIssue(status) ? (
           <Button
-            disabled={pending}
-            onClick={() => run(() => issueCommercialDocumentAction(documentId))}
+            loading={pending}
+            onClick={() =>
+              run(() => issueCommercialDocumentAction(documentId), {
+                successTitle: "Document issued",
+              })
+            }
           >
             Issue document
           </Button>
@@ -76,22 +60,26 @@ export function DocumentActions({
           <>
             <Button
               variant="secondary"
-              disabled={pending}
+              loading={pending}
               onClick={() => {
                 const fd = new FormData();
                 fd.set("status", "accepted");
-                run(() => markCommercialStatusAction(documentId, fd));
+                run(() => markCommercialStatusAction(documentId, fd), {
+                  successTitle: "Marked accepted",
+                });
               }}
             >
               Mark accepted
             </Button>
             <Button
               variant="secondary"
-              disabled={pending}
+              loading={pending}
               onClick={() => {
                 const fd = new FormData();
                 fd.set("status", "declined");
-                run(() => markCommercialStatusAction(documentId, fd));
+                run(() => markCommercialStatusAction(documentId, fd), {
+                  successTitle: "Marked declined",
+                });
               }}
             >
               Mark declined
@@ -122,11 +110,15 @@ export function DocumentActions({
           />
           <Button
             variant="danger"
-            disabled={pending || voidReason.trim().length < 3}
+            loading={pending}
+            disabled={voidReason.trim().length < 3}
             onClick={() => {
               const fd = new FormData();
               fd.set("reason", voidReason);
-              run(() => voidCommercialDocumentAction(documentId, fd));
+              run(() => voidCommercialDocumentAction(documentId, fd), {
+                successTitle: "Document voided",
+                onSuccess: () => setVoidReason(""),
+              });
             }}
           >
             Void document
@@ -142,8 +134,12 @@ export function DocumentActions({
           className="space-y-3 border-t border-border pt-4"
           onSubmit={(event) => {
             event.preventDefault();
-            const fd = new FormData(event.currentTarget);
-            run(() => uploadSignedCopyAction(documentId, fd));
+            const form = event.currentTarget;
+            const fd = new FormData(form);
+            run(() => uploadSignedCopyAction(documentId, fd), {
+              successTitle: "Signed copy recorded",
+              onSuccess: () => form.reset(),
+            });
           }}
         >
           <h3 className="text-sm font-medium">Record signed copy</h3>
@@ -173,7 +169,7 @@ export function DocumentActions({
               Replace existing signed copy (audited)
             </label>
           ) : null}
-          <Button type="submit" variant="secondary" disabled={pending}>
+          <Button type="submit" variant="secondary" loading={pending}>
             Upload signed copy
           </Button>
         </form>

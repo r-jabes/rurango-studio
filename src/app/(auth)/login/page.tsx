@@ -9,7 +9,7 @@ export const metadata = {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-full items-center justify-center px-4 py-16">
+    <div className="flex h-dvh items-center justify-center overflow-y-auto px-4 py-16">
       <div className="w-full max-w-md space-y-6 rounded-xl border border-border bg-surface p-6 sm:p-8">
         <div className="space-y-3">
           <div className="flex items-center gap-3">

@@ -1,14 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { StatusBanner } from "@/components/ui/status-banner";
-import type { FieldErrors } from "@/lib/action-result";
+import { useActionFeedback } from "@/lib/use-action-feedback";
 import { createTaskAction } from "@/server/crm/actions";
 
 type MilestoneOption = { id: string; title: string };
@@ -19,38 +16,22 @@ type TaskFormProps = {
 };
 
 export function TaskForm({ projectId, milestones }: TaskFormProps) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const { pending, fieldErrors, run } = useActionFeedback();
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
     formData.set("projectId", projectId);
-    setError(null);
-    setFieldErrors({});
 
-    startTransition(async () => {
-      const result = await createTaskAction(formData);
-      if (!result.ok) {
-        setError(result.message);
-        setFieldErrors(result.fieldErrors ?? {});
-        return;
-      }
-      form.reset();
-      router.refresh();
+    run(() => createTaskAction(formData), {
+      successTitle: "Task added",
+      onSuccess: () => form.reset(),
     });
   }
 
   return (
     <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2">
-      {error ? (
-        <div className="sm:col-span-2">
-          <StatusBanner tone="danger">{error}</StatusBanner>
-        </div>
-      ) : null}
       <div className="sm:col-span-2">
         <Label htmlFor="title">Task title</Label>
         <Input id="title" name="title" required />
@@ -90,7 +71,7 @@ export function TaskForm({ projectId, milestones }: TaskFormProps) {
         <Input id="dueOn" name="dueOn" type="date" />
       </div>
       <div className="sm:col-span-2">
-        <Button type="submit" size="sm" disabled={pending}>
+        <Button type="submit" size="sm" loading={pending}>
           {pending ? "Adding…" : "Add task"}
         </Button>
       </div>

@@ -1,8 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import { useActionFeedback } from "@/lib/use-action-feedback";
 import { setCurrentVersionAction } from "@/server/documents/actions";
 
 type SetCurrentVersionButtonProps = {
@@ -14,20 +13,18 @@ export function SetCurrentVersionButton({
   documentId,
   versionId,
 }: SetCurrentVersionButtonProps) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const { pending, run } = useActionFeedback();
 
   return (
     <Button
       size="sm"
       variant="secondary"
-      disabled={pending}
-      onClick={() => {
-        startTransition(async () => {
-          await setCurrentVersionAction(documentId, versionId);
-          router.refresh();
-        });
-      }}
+      loading={pending}
+      onClick={() =>
+        run(() => setCurrentVersionAction(documentId, versionId), {
+          successTitle: "Current version updated",
+        })
+      }
     >
       {pending ? "Updating…" : "Make current"}
     </Button>

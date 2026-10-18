@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
@@ -9,13 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { StatusBanner } from "@/components/ui/status-banner";
 import { Textarea } from "@/components/ui/textarea";
-import type { FieldErrors } from "@/lib/action-result";
 import {
   cmsTypeLabels,
   cmsTypeRoutes,
   slugify,
   type CmsEntryType,
 } from "@/lib/cms/meta";
+import { useActionFeedback } from "@/lib/use-action-feedback";
 import {
   createCmsEntryAction,
   updateCmsEntryAction,
@@ -48,11 +47,7 @@ export function CmsEntryForm({
   locked = false,
   defaults,
 }: CmsEntryFormProps) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const { pending, fieldErrors, run, router } = useActionFeedback();
   const [slug, setSlug] = useState(defaults?.slug ?? "");
   const body = defaults?.body ?? {};
 
@@ -62,30 +57,30 @@ export function CmsEntryForm({
     const formData = new FormData(event.currentTarget);
     formData.set("type", type);
     formData.set("slug", slug);
-    setMessage(null);
-    setError(null);
-    setFieldErrors({});
 
-    startTransition(async () => {
-      const result =
+    run(
+      () =>
         mode === "create"
-          ? await createCmsEntryAction(formData)
-          : await updateCmsEntryAction(entryId!, formData);
-
-      if (!result.ok) {
-        setError(result.message);
-        setFieldErrors(result.fieldErrors ?? {});
-        return;
-      }
-
-      setMessage(result.message ?? "Saved.");
-      if (mode === "create" && result.data?.id) {
-        router.push(`${cmsTypeRoutes[type]}/${result.data.id}`);
-        router.refresh();
-        return;
-      }
-      router.refresh();
-    });
+          ? createCmsEntryAction(formData)
+          : updateCmsEntryAction(entryId!, formData),
+      {
+        successTitle: mode === "create" ? "Entry created" : "Entry saved",
+        refresh: mode !== "create",
+        onSuccess: (result) => {
+          if (
+            mode === "create" &&
+            result.data &&
+            typeof result.data === "object" &&
+            "id" in result.data
+          ) {
+            router.push(
+              `${cmsTypeRoutes[type]}/${String((result.data as { id: string }).id)}`,
+            );
+            router.refresh();
+          }
+        },
+      },
+    );
   }
 
   return (
@@ -96,8 +91,6 @@ export function CmsEntryForm({
           editing.
         </StatusBanner>
       ) : null}
-      {error ? <StatusBanner tone="danger">{error}</StatusBanner> : null}
-      {message ? <StatusBanner tone="success">{message}</StatusBanner> : null}
 
       <fieldset disabled={locked || pending} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -427,7 +420,7 @@ export function CmsEntryForm({
       </fieldset>
 
       {!locked ? (
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" loading={pending}>
           {pending ? "Saving…" : mode === "create" ? "Create draft" : "Save draft"}
         </Button>
       ) : null}

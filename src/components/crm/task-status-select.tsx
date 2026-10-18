@@ -1,8 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
 import { Select } from "@/components/ui/select";
+import { useActionFeedback } from "@/lib/use-action-feedback";
 import { updateTaskStatusAction } from "@/server/crm/actions";
 
 type TaskStatusSelectProps = {
@@ -11,8 +10,7 @@ type TaskStatusSelectProps = {
 };
 
 export function TaskStatusSelect({ taskId, value }: TaskStatusSelectProps) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const { pending, run } = useActionFeedback();
 
   return (
     <Select
@@ -21,9 +19,8 @@ export function TaskStatusSelect({ taskId, value }: TaskStatusSelectProps) {
       disabled={pending}
       onChange={(event) => {
         const next = event.target.value;
-        startTransition(async () => {
-          await updateTaskStatusAction(taskId, next);
-          router.refresh();
+        run(() => updateTaskStatusAction(taskId, next), {
+          successTitle: "Task updated",
         });
       }}
     >

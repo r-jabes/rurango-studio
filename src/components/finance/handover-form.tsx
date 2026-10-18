@@ -1,43 +1,29 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { StatusBanner } from "@/components/ui/status-banner";
 import { Textarea } from "@/components/ui/textarea";
+import { useActionFeedback } from "@/lib/use-action-feedback";
 import { recordHandoverAction } from "@/server/finance/actions";
 
 export function HandoverForm({ projectId }: { projectId: string }) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const { pending, run } = useActionFeedback();
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     formData.set("projectId", projectId);
-    setError(null);
-    setMessage(null);
 
-    startTransition(async () => {
-      const result = await recordHandoverAction(formData);
-      if (!result.ok) {
-        setError(result.message);
-        return;
-      }
-      setMessage(result.message ?? "Saved.");
-      event.currentTarget.reset();
-      router.refresh();
+    run(() => recordHandoverAction(formData), {
+      successTitle: "Handover recorded",
+      onSuccess: () => form.reset(),
     });
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
-      {error ? <StatusBanner tone="danger">{error}</StatusBanner> : null}
-      {message ? <StatusBanner tone="success">{message}</StatusBanner> : null}
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <Label htmlFor="acceptedByName">Accepted by</Label>
@@ -59,7 +45,7 @@ export function HandoverForm({ projectId }: { projectId: string }) {
           </p>
         </div>
       </div>
-      <Button type="submit" size="sm" disabled={pending}>
+      <Button type="submit" size="sm" loading={pending}>
         {pending ? "Saving…" : "Record handover"}
       </Button>
     </form>

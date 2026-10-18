@@ -52,9 +52,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-dvh overflow-hidden antialiased`}
     >
-      <body className="min-h-full bg-background font-sans text-foreground">
+      <body className="h-dvh overflow-hidden bg-background font-sans text-foreground">
         <ToastProvider>
           <NavigationProgress />
           {children}

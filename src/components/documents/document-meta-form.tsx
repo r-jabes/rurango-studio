@@ -1,14 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { StatusBanner } from "@/components/ui/status-banner";
-import type { FieldErrors } from "@/lib/action-result";
+import { useActionFeedback } from "@/lib/use-action-feedback";
 import { updateDocumentMetaAction } from "@/server/documents/actions";
 
 type Option = { id: string; name: string };
@@ -34,11 +32,7 @@ export function DocumentMetaForm({
   projects,
   defaults,
 }: DocumentMetaFormProps) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const { pending, fieldErrors, run } = useActionFeedback();
   const [clientId, setClientId] = useState(defaults.clientId ?? "");
 
   const filteredProjects = clientId
@@ -48,26 +42,14 @@ export function DocumentMetaForm({
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    setError(null);
-    setMessage(null);
-    setFieldErrors({});
 
-    startTransition(async () => {
-      const result = await updateDocumentMetaAction(documentId, formData);
-      if (!result.ok) {
-        setError(result.message);
-        setFieldErrors(result.fieldErrors ?? {});
-        return;
-      }
-      setMessage(result.message ?? "Saved.");
-      router.refresh();
+    run(() => updateDocumentMetaAction(documentId, formData), {
+      successTitle: "Details saved",
     });
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
-      {error ? <StatusBanner tone="danger">{error}</StatusBanner> : null}
-      {message ? <StatusBanner tone="success">{message}</StatusBanner> : null}
       <div>
         <Label htmlFor="title">Title</Label>
         <Input id="title" name="title" required defaultValue={defaults.title} />
@@ -123,7 +105,7 @@ export function DocumentMetaForm({
         <Label htmlFor="tags">Tags</Label>
         <Input id="tags" name="tags" defaultValue={defaults.tags} />
       </div>
-      <Button type="submit" size="sm" disabled={pending}>
+      <Button type="submit" size="sm" loading={pending}>
         {pending ? "Saving…" : "Save details"}
       </Button>
     </form>

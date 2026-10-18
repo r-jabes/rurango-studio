@@ -10,10 +10,6 @@ import { PageHeader } from "@/components/ui/page-header";
 import { formatBytes, isPreviewableMime } from "@/lib/documents/policy";
 import { requireRole } from "@/lib/session";
 import {
-  archiveDocumentAction,
-  restoreDocumentAction,
-} from "@/server/documents/actions";
-import {
   listClientOptions,
   listProjectOptions,
 } from "@/server/documents/options";
@@ -72,17 +68,21 @@ export default async function DocumentDetailPage({
             ) : null}
             {document.status === "active" ? (
               <ArchiveButton
+                entity="document"
+                entityId={id}
+                mode="archive"
                 label="Archive"
                 confirmTitle="Archive this document?"
                 confirmDescription="The document leaves the active list. All versions remain stored for recovery."
-                action={() => archiveDocumentAction(id)}
               />
             ) : (
               <ArchiveButton
+                entity="document"
+                entityId={id}
+                mode="restore"
                 label="Restore"
                 confirmTitle="Restore this document?"
                 confirmDescription="The document returns to the active vault list."
-                action={() => restoreDocumentAction(id)}
               />
             )}
           </div>

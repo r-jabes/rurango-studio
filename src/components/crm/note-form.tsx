@@ -1,13 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field-error";
 import { Label } from "@/components/ui/label";
-import { StatusBanner } from "@/components/ui/status-banner";
 import { Textarea } from "@/components/ui/textarea";
-import type { FieldErrors } from "@/lib/action-result";
+import { useActionFeedback } from "@/lib/use-action-feedback";
 import { createNoteAction } from "@/server/crm/actions";
 
 type NoteFormProps = {
@@ -16,10 +13,7 @@ type NoteFormProps = {
 };
 
 export function NoteForm({ clientId, projectId }: NoteFormProps) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const { pending, fieldErrors, run } = useActionFeedback();
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -27,30 +21,21 @@ export function NoteForm({ clientId, projectId }: NoteFormProps) {
     const formData = new FormData(form);
     if (clientId) formData.set("clientId", clientId);
     if (projectId) formData.set("projectId", projectId);
-    setError(null);
-    setFieldErrors({});
 
-    startTransition(async () => {
-      const result = await createNoteAction(formData);
-      if (!result.ok) {
-        setError(result.message);
-        setFieldErrors(result.fieldErrors ?? {});
-        return;
-      }
-      form.reset();
-      router.refresh();
+    run(() => createNoteAction(formData), {
+      successTitle: "Note added",
+      onSuccess: () => form.reset(),
     });
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
-      {error ? <StatusBanner tone="danger">{error}</StatusBanner> : null}
       <div>
         <Label htmlFor="body">Add note</Label>
         <Textarea id="body" name="body" required />
         <FieldError errors={fieldErrors.body} />
       </div>
-      <Button type="submit" size="sm" disabled={pending}>
+      <Button type="submit" size="sm" loading={pending}>
         {pending ? "Saving…" : "Add note"}
       </Button>
     </form>

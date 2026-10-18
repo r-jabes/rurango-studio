@@ -8,10 +8,6 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { PageHeader } from "@/components/ui/page-header";
 import { requireRole } from "@/lib/session";
 import {
-  archiveClientAction,
-  restoreClientAction,
-} from "@/server/crm/actions";
-import {
   getClientById,
   listActivities,
   listClientNotes,
@@ -55,17 +51,21 @@ export default async function ClientDetailPage({
             </ButtonLink>
             {client.status === "active" ? (
               <ArchiveButton
+                entity="client"
+                entityId={id}
+                mode="archive"
                 label="Archive"
                 confirmTitle="Archive this client?"
                 confirmDescription="Archived clients stay in the system but are hidden from the default list."
-                action={() => archiveClientAction(id)}
               />
             ) : (
               <ArchiveButton
+                entity="client"
+                entityId={id}
+                mode="restore"
                 label="Restore"
                 confirmTitle="Restore this client?"
                 confirmDescription="The client will return to the active list."
-                action={() => restoreClientAction(id)}
               />
             )}
           </div>
