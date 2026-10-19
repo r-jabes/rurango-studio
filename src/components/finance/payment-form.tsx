@@ -3,9 +3,11 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field-error";
+import { FieldHint } from "@/components/ui/field-hint";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { StatusBanner } from "@/components/ui/status-banner";
 import { Textarea } from "@/components/ui/textarea";
 import { useActionFeedback } from "@/lib/use-action-feedback";
 import { formatMoney } from "@/lib/money";
@@ -52,8 +54,15 @@ export function PaymentForm({ invoices, defaultInvoiceId }: PaymentFormProps) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
+      <StatusBanner tone="info">
+        A payment is money received against an issued invoice — not a new
+        commercial PDF. Create and issue the invoice first, then log each
+        receipt here.
+      </StatusBanner>
+
       <div>
         <Label htmlFor="invoiceId">Invoice</Label>
+        <FieldHint>Which open invoice this receipt reduces.</FieldHint>
         <Select
           id="invoiceId"
           name="invoiceId"
@@ -88,6 +97,7 @@ export function PaymentForm({ invoices, defaultInvoiceId }: PaymentFormProps) {
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <Label htmlFor="amountMajor">Amount</Label>
+          <FieldHint>Amount received in the invoice currency.</FieldHint>
           <Input
             id="amountMajor"
             name="amountMajor"
@@ -99,6 +109,7 @@ export function PaymentForm({ invoices, defaultInvoiceId }: PaymentFormProps) {
         </div>
         <div>
           <Label htmlFor="paidOn">Paid on</Label>
+          <FieldHint>Bank / MoMo settlement date.</FieldHint>
           <Input
             id="paidOn"
             name="paidOn"
@@ -110,6 +121,7 @@ export function PaymentForm({ invoices, defaultInvoiceId }: PaymentFormProps) {
         </div>
         <div>
           <Label htmlFor="method">Method</Label>
+          <FieldHint>e.g. Bank transfer, MTN MoMo, cash</FieldHint>
           <Input
             id="method"
             name="method"
@@ -118,10 +130,12 @@ export function PaymentForm({ invoices, defaultInvoiceId }: PaymentFormProps) {
         </div>
         <div>
           <Label htmlFor="reference">Reference</Label>
-          <Input id="reference" name="reference" />
+          <FieldHint>Transaction ID or remittance number from the payer.</FieldHint>
+          <Input id="reference" name="reference" placeholder="TXN-…" />
         </div>
         <div className="sm:col-span-2">
           <Label htmlFor="notes">Notes</Label>
+          <FieldHint>Optional context for finance review.</FieldHint>
           <Textarea id="notes" name="notes" rows={2} />
         </div>
       </div>

@@ -11,7 +11,15 @@ import {
   type ActionResult,
 } from "@/lib/action-result";
 import { runBackup } from "@/lib/backups/runner";
+import {
+  IMAGE_UPLOAD_MIME_TYPES,
+  assertAllowedUpload,
+} from "@/lib/documents/policy";
 import { requireRole } from "@/lib/session";
+import {
+  buildPublicMediaObjectKey,
+  getStorage,
+} from "@/lib/storage";
 import {
   backupTriggerSchema,
   companySettingsInputSchema,
@@ -46,6 +54,29 @@ export async function updateCompanySettingsAction(
   if (parsed.data.addressCity) addressJson.city = parsed.data.addressCity;
   if (parsed.data.addressCountry) addressJson.country = parsed.data.addressCountry;
 
+  let logoStorageKey: string | null | undefined;
+  const logoFile = formData.get("logoFile");
+  if (logoFile instanceof File && logoFile.size > 0) {
+    try {
+      assertAllowedUpload({
+        mimeType: logoFile.type,
+        byteSize: logoFile.size,
+        allowedMimeTypes: [...IMAGE_UPLOAD_MIME_TYPES],
+      });
+    } catch (error) {
+      return fail(error instanceof Error ? error.message : "Invalid logo file.");
+    }
+    const key = buildPublicMediaObjectKey(logoFile.name);
+    await getStorage().putObject({
+      key,
+      body: Buffer.from(await logoFile.arrayBuffer()),
+      contentType: logoFile.type,
+    });
+    logoStorageKey = key;
+  } else if (formData.get("clearLogo") === "true") {
+    logoStorageKey = null;
+  }
+
   const existing = await db.query.companySettings.findFirst();
   if (existing) {
     await db
@@ -62,6 +93,7 @@ export async function updateCompanySettingsAction(
         proposalPrefix: parsed.data.proposalPrefix,
         agreementPrefix: parsed.data.agreementPrefix,
         uploadMaxBytes: parsed.data.uploadMaxBytes,
+        ...(logoStorageKey !== undefined ? { logoStorageKey } : {}),
         updatedAt: new Date(),
       })
       .where(eq(companySettings.id, existing.id));
@@ -78,6 +110,7 @@ export async function updateCompanySettingsAction(
       proposalPrefix: parsed.data.proposalPrefix,
       agreementPrefix: parsed.data.agreementPrefix,
       uploadMaxBytes: parsed.data.uploadMaxBytes,
+      logoStorageKey: logoStorageKey ?? null,
     });
   }
 

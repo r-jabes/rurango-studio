@@ -1,6 +1,7 @@
 import { CommercialDocForm } from "@/components/commercial/commercial-doc-form";
 import { PageHeader } from "@/components/ui/page-header";
 import {
+  typeDescriptions,
   typeLabels,
   typeRoutes,
   type PrimaryCommercialType,
@@ -27,7 +28,7 @@ export async function CommercialNewPage({
     <div className="space-y-6">
       <PageHeader
         title={`New ${typeLabels[type].toLowerCase()}`}
-        description={`Draft a ${typeLabels[type].toLowerCase()} with line items. Issuing freezes a snapshot and PDF.`}
+        description={`${typeDescriptions[type]} Issuing freezes commercial numbers into a snapshot and branded PDF.`}
       />
       <CommercialDocForm
         mode="create"

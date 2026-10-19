@@ -39,7 +39,10 @@ export type CommercialSnapshot = {
     legalName: string;
     tradingName: string;
     taxId: string | null;
+    supportEmail?: string | null;
     address: Record<string, string> | null;
+    /** Vault key for company logo used when rendering branded PDFs. */
+    logoStorageKey?: string | null;
   };
   client: {
     id: string;

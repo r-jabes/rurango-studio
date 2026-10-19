@@ -51,6 +51,7 @@ export default async function SettingsPage() {
     proposalPrefix: settings?.proposalPrefix ?? "PRO",
     agreementPrefix: settings?.agreementPrefix ?? "AGR",
     uploadMaxBytes: settings?.uploadMaxBytes ?? 26_214_400,
+    logoStorageKey: settings?.logoStorageKey ?? null,
   };
 
   return (

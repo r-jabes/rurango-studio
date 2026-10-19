@@ -7,11 +7,14 @@ import {
 } from "@/components/commercial/line-items-editor";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field-error";
+import { FieldHint } from "@/components/ui/field-hint";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { StatusBanner } from "@/components/ui/status-banner";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  typeGuidance,
   typeLabels,
   typeRoutes,
   type PrimaryCommercialType,
@@ -71,6 +74,7 @@ export function CommercialDocForm({
   defaultCurrency,
   defaults,
 }: CommercialDocFormProps) {
+  const guide = typeGuidance[type];
   const { pending, fieldErrors, run, router } = useActionFeedback();
   const [clientId, setClientId] = useState(defaults?.clientId ?? "");
   const [currency, setCurrency] = useState(
@@ -146,21 +150,25 @@ export function CommercialDocForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
+      <StatusBanner tone="info">{guide.summary}</StatusBanner>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <Label htmlFor="title">Title</Label>
+          <FieldHint>{guide.titleHint}</FieldHint>
           <Input
             id="title"
             name="title"
             required
             defaultValue={defaults?.title}
-            placeholder={`${typeLabels[type]} title`}
+            placeholder={guide.titleHint}
           />
           <FieldError errors={fieldErrors.title} />
         </div>
 
         <div>
           <Label htmlFor="clientId">Client</Label>
+          <FieldHint>The party this document is addressed to.</FieldHint>
           <Select
             id="clientId"
             name="clientId"
@@ -180,6 +188,7 @@ export function CommercialDocForm({
 
         <div>
           <Label htmlFor="projectId">Project (optional)</Label>
+          <FieldHint>Link to an internal CRM project when this work is tracked there.</FieldHint>
           <Select
             id="projectId"
             name="projectId"
@@ -197,6 +206,7 @@ export function CommercialDocForm({
 
         <div>
           <Label htmlFor="templateId">Template (optional)</Label>
+          <FieldHint>Prefills payment terms, notes, and body from Settings → Templates.</FieldHint>
           <Select
             id="templateId"
             name="templateId"
@@ -214,6 +224,7 @@ export function CommercialDocForm({
 
         <div>
           <Label htmlFor="currency">Currency</Label>
+          <FieldHint>ISO code for line totals (e.g. RWF, USD).</FieldHint>
           <Input
             id="currency"
             value={currency}
@@ -226,6 +237,7 @@ export function CommercialDocForm({
 
         <div>
           <Label htmlFor="issueDate">Issue date</Label>
+          <FieldHint>{guide.issueDateHint}</FieldHint>
           <Input
             id="issueDate"
             name="issueDate"
@@ -233,58 +245,87 @@ export function CommercialDocForm({
             defaultValue={defaults?.issueDate ?? undefined}
           />
         </div>
-        <div>
-          <Label htmlFor="dueDate">Due date</Label>
-          <Input
-            id="dueDate"
-            name="dueDate"
-            type="date"
-            defaultValue={defaults?.dueDate ?? undefined}
-          />
-        </div>
-        <div>
-          <Label htmlFor="expiryDate">Expiry date</Label>
-          <Input
-            id="expiryDate"
+
+        {guide.showDueDate ? (
+          <div>
+            <Label htmlFor="dueDate">Due date</Label>
+            <FieldHint>{guide.dueDateHint}</FieldHint>
+            <Input
+              id="dueDate"
+              name="dueDate"
+              type="date"
+              defaultValue={defaults?.dueDate ?? undefined}
+            />
+          </div>
+        ) : (
+          <input type="hidden" name="dueDate" value={defaults?.dueDate ?? ""} />
+        )}
+
+        {guide.showExpiryDate ? (
+          <div>
+            <Label htmlFor="expiryDate">Expiry / validity date</Label>
+            <FieldHint>{guide.expiryDateHint}</FieldHint>
+            <Input
+              id="expiryDate"
+              name="expiryDate"
+              type="date"
+              defaultValue={defaults?.expiryDate ?? undefined}
+            />
+          </div>
+        ) : (
+          <input
+            type="hidden"
             name="expiryDate"
-            type="date"
-            defaultValue={defaults?.expiryDate ?? undefined}
+            value={defaults?.expiryDate ?? ""}
           />
-        </div>
+        )}
+
         <div className="sm:col-span-2">
           <Label htmlFor="paymentTerms">Payment terms</Label>
+          <FieldHint>{guide.paymentTermsHint}</FieldHint>
           <Input
             id="paymentTerms"
             value={paymentTerms}
             onChange={(e) => setPaymentTerms(e.target.value)}
-            placeholder="Net 14, 50% deposit, …"
+            placeholder={guide.paymentTermsHint}
           />
         </div>
+
         <div className="sm:col-span-2">
           <Label htmlFor="notes">Notes</Label>
+          <FieldHint>{guide.notesHint}</FieldHint>
           <Textarea
             id="notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
+            placeholder={guide.notesHint}
           />
         </div>
+
         <div className="sm:col-span-2">
-          <Label htmlFor="bodyHtml">Body / scope (plain text)</Label>
+          <Label htmlFor="bodyHtml">
+            {guide.emphasizeBody ? "Scope / terms (primary narrative)" : "Body / description"}
+          </Label>
+          <FieldHint>{guide.bodyHint}</FieldHint>
           <Textarea
             id="bodyHtml"
             value={bodyHtml}
             onChange={(e) => setBodyHtml(e.target.value)}
-            rows={4}
+            rows={guide.emphasizeBody ? 8 : 4}
+            placeholder={guide.bodyHint}
           />
         </div>
       </div>
 
-      <LineItemsEditor
-        currency={currency}
-        defaultItems={defaultLineItems}
-      />
-      <FieldError errors={fieldErrors.lineItemsJson} />
+      <div className="space-y-2">
+        <div>
+          <p className="text-sm font-medium text-foreground-secondary">Line items</p>
+          <FieldHint>{guide.lineItemsHint}</FieldHint>
+        </div>
+        <LineItemsEditor currency={currency} defaultItems={defaultLineItems} />
+        <FieldError errors={fieldErrors.lineItemsJson} />
+      </div>
 
       <Button type="submit" loading={pending}>
         {pending

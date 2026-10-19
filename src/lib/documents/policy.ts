@@ -17,8 +17,12 @@ export function getAllowedMimeTypes() {
 export function assertAllowedUpload(input: {
   mimeType: string;
   byteSize: number;
+  /** Restrict to a narrower allow-list (e.g. images only). */
+  allowedMimeTypes?: string[];
 }) {
-  const allowed = getAllowedMimeTypes();
+  const allowed = (
+    input.allowedMimeTypes ?? getAllowedMimeTypes()
+  ).map((item) => item.toLowerCase());
   const mime = input.mimeType.toLowerCase();
   if (!allowed.includes(mime)) {
     throw new Error(
@@ -35,6 +39,12 @@ export function assertAllowedUpload(input: {
     );
   }
 }
+
+export const IMAGE_UPLOAD_MIME_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+] as const;
 
 export function isPreviewableMime(mimeType: string) {
   return (

@@ -34,11 +34,28 @@ export async function GET(
   try {
     let body: Buffer;
 
-    if (doc.pdfStorageKey) {
+    // Prefer regenerating from the frozen snapshot so layout/branding can
+    // improve without changing commercial numbers or line items.
+    if (doc.snapshotJson) {
+      const settings = await db.query.companySettings.findFirst();
+      const snapshot = {
+        ...doc.snapshotJson,
+        company: {
+          ...doc.snapshotJson.company,
+          supportEmail:
+            doc.snapshotJson.company.supportEmail ??
+            settings?.supportEmail ??
+            null,
+          logoStorageKey:
+            doc.snapshotJson.company.logoStorageKey ??
+            settings?.logoStorageKey ??
+            null,
+        },
+      };
+      body = await renderCommercialPdf(snapshot);
+    } else if (doc.pdfStorageKey) {
       const object = await getStorage().getObject(doc.pdfStorageKey);
       body = object.body;
-    } else if (doc.snapshotJson) {
-      body = await renderCommercialPdf(doc.snapshotJson);
     } else {
       return NextResponse.json(
         { error: "PDF is available after the document is issued." },

@@ -35,6 +35,16 @@ export function buildVaultObjectKey(originalFilename: string) {
   return `vault/${randomUUID()}/${randomUUID()}${safeExt}`;
 }
 
+/** Publicly readable media (CMS covers, logos served via /api/media/...). */
+export function buildPublicMediaObjectKey(originalFilename: string) {
+  const safeExt = path.extname(originalFilename).slice(0, 20).toLowerCase();
+  const safeBase = path
+    .basename(originalFilename, safeExt)
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .slice(0, 48);
+  return `media/public/${randomUUID()}-${safeBase || "image"}${safeExt}`;
+}
+
 export function checksumSha256(buffer: Buffer) {
   return createHash("sha256").update(buffer).digest("hex");
 }

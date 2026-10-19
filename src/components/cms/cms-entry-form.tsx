@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field-error";
+import { FieldHint } from "@/components/ui/field-hint";
+import { ImageUploadField } from "@/components/ui/image-upload-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -96,6 +98,13 @@ export function CmsEntryForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <Label htmlFor="title">Title</Label>
+            <FieldHint>
+              {type === "testimonial"
+                ? "Short label for Studio lists (e.g. Client name — product)."
+                : type === "service"
+                  ? "Service name as it should appear publicly."
+                  : "Project or post title."}
+            </FieldHint>
             <Input
               id="title"
               name="title"
@@ -109,6 +118,7 @@ export function CmsEntryForm({
           </div>
           <div>
             <Label htmlFor="slug">Slug</Label>
+            <FieldHint>URL fragment: lowercase letters, numbers, hyphens.</FieldHint>
             <Input
               id="slug"
               value={slug}
@@ -117,17 +127,18 @@ export function CmsEntryForm({
             />
             <FieldError errors={fieldErrors.slug} />
           </div>
-          <div>
-            <Label htmlFor="coverPublicPath">Cover path (public site)</Label>
-            <Input
+          <div className="sm:col-span-2">
+            <ImageUploadField
               id="coverPublicPath"
               name="coverPublicPath"
-              placeholder="/work/example/cover.png"
-              defaultValue={defaults?.coverPublicPath ?? undefined}
+              label="Cover image"
+              hint="Upload a PNG, JPEG, or WebP, or paste an existing public path (e.g. /work/example/cover.png)."
+              defaultValue={defaults?.coverPublicPath}
             />
           </div>
           <div>
             <Label htmlFor="seoTitle">SEO title</Label>
+            <FieldHint>Optional override for search results; leave blank to use the title.</FieldHint>
             <Input
               id="seoTitle"
               name="seoTitle"
@@ -136,6 +147,7 @@ export function CmsEntryForm({
           </div>
           <div>
             <Label htmlFor="seoDescription">SEO description</Label>
+            <FieldHint>One or two sentences for search snippets and social cards.</FieldHint>
             <Input
               id="seoDescription"
               name="seoDescription"
@@ -144,6 +156,7 @@ export function CmsEntryForm({
           </div>
           <div className="sm:col-span-2">
             <Label htmlFor="tagsText">Tags (comma-separated)</Label>
+            <FieldHint>e.g. marketplace, rwanda, operations</FieldHint>
             <Input
               id="tagsText"
               name="tagsText"
@@ -159,12 +172,14 @@ export function CmsEntryForm({
             </h2>
             <div>
               <Label htmlFor="summary">Summary</Label>
+              <FieldHint>One short paragraph for cards and listings (max ~500 characters).</FieldHint>
               <Textarea
                 id="summary"
                 name="summary"
                 required
                 rows={3}
                 defaultValue={String(body.summary ?? "")}
+                placeholder="What this product does and who it is for."
               />
               <FieldError errors={fieldErrors.summary} />
             </div>
@@ -209,24 +224,32 @@ export function CmsEntryForm({
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <Label htmlFor="liveUrl">Live URL</Label>
+                <FieldHint>Public product URL visitors can open.</FieldHint>
                 <Input
                   id="liveUrl"
                   name="liveUrl"
                   required
                   defaultValue={String(body.liveUrl ?? "")}
+                  placeholder="https://…"
                 />
                 <FieldError errors={fieldErrors.liveUrl} />
               </div>
               <div>
-                <Label htmlFor="previewImage">Preview image path</Label>
-                <Input
+                <ImageUploadField
                   id="previewImage"
                   name="previewImage"
-                  defaultValue={String(body.previewImage ?? "")}
+                  label="Preview image"
+                  hint="Card/hero image. Upload preferred; path still allowed."
+                  defaultValue={
+                    typeof body.previewImage === "string"
+                      ? body.previewImage
+                      : null
+                  }
                 />
               </div>
               <div>
                 <Label htmlFor="role">Role</Label>
+                <FieldHint>Your role on the work (e.g. Product design & engineering).</FieldHint>
                 <Input id="role" name="role" defaultValue={String(body.role ?? "")} />
               </div>
               <div className="flex items-end">
@@ -252,15 +275,16 @@ export function CmsEntryForm({
             </div>
             {(
               [
-                ["context", "Context"],
-                ["problem", "Problem"],
-                ["approach", "Approach"],
-                ["implementation", "Implementation"],
-                ["notes", "Notes"],
+                ["context", "Context", "Background: market, users, and why the work started."],
+                ["problem", "Problem", "The operational or user problem you set out to solve."],
+                ["approach", "Approach", "How you framed the solution and key product choices."],
+                ["implementation", "Implementation", "Technical/build notes that are safe to publish."],
+                ["notes", "Notes", "Caveats, soft-launch status, or honesty labels."],
               ] as const
-            ).map(([name, label]) => (
+            ).map(([name, label, hint]) => (
               <div key={name}>
                 <Label htmlFor={name}>{label}</Label>
+                <FieldHint>{hint}</FieldHint>
                 <Textarea
                   id={name}
                   name={name}
@@ -271,16 +295,17 @@ export function CmsEntryForm({
             ))}
             {(
               [
-                ["scopeText", "Scope (one per line)", "scope"],
-                ["constraintsText", "Constraints", "constraints"],
-                ["technologiesText", "Technologies", "technologies"],
-                ["outcomesText", "Outcomes", "outcomes"],
-                ["learningsText", "Learnings", "learnings"],
-                ["capabilitiesText", "Capabilities", "capabilities"],
+                ["scopeText", "Scope (one per line)", "scope", "Major inclusions."],
+                ["constraintsText", "Constraints", "constraints", "Hard limits (currency, offline, roles)."],
+                ["technologiesText", "Technologies", "technologies", "Stack names, one per line."],
+                ["outcomesText", "Outcomes", "outcomes", "Verified results only — no invented metrics."],
+                ["learningsText", "Learnings", "learnings", "What you would change next time."],
+                ["capabilitiesText", "Capabilities", "capabilities", "Service tags this project demonstrates."],
               ] as const
-            ).map(([name, label, key]) => (
+            ).map(([name, label, key, hint]) => (
               <div key={name}>
                 <Label htmlFor={name}>{label}</Label>
+                <FieldHint>{hint}</FieldHint>
                 <Textarea
                   id={name}
                   name={name}
@@ -291,6 +316,9 @@ export function CmsEntryForm({
             ))}
             <div>
               <Label htmlFor="decisionsJson">Decisions JSON</Label>
+              <FieldHint>
+                Array of {"{"}&quot;title&quot;, &quot;detail&quot;{"}"} objects for case-study decision cards.
+              </FieldHint>
               <Textarea
                 id="decisionsJson"
                 name="decisionsJson"
@@ -306,16 +334,19 @@ export function CmsEntryForm({
           <div className="space-y-4 rounded-md border border-border p-4">
             <div>
               <Label htmlFor="description">Description</Label>
+              <FieldHint>What the service is, in clear commercial language.</FieldHint>
               <Textarea
                 id="description"
                 name="description"
                 required
                 rows={3}
                 defaultValue={String(body.description ?? "")}
+                placeholder="Custom software for workflows that outgrow spreadsheets…"
               />
             </div>
             <div>
               <Label htmlFor="problem">Problem</Label>
+              <FieldHint>The buyer pain this service addresses.</FieldHint>
               <Textarea
                 id="problem"
                 name="problem"
@@ -326,20 +357,24 @@ export function CmsEntryForm({
             </div>
             <div>
               <Label htmlFor="deliverablesText">Deliverables (one per line)</Label>
+              <FieldHint>Concrete outputs the client receives.</FieldHint>
               <Textarea
                 id="deliverablesText"
                 name="deliverablesText"
                 rows={4}
                 defaultValue={lines(body.deliverables)}
+                placeholder={"Requirements workshop\nProduction deployment\nHandover documentation"}
               />
             </div>
             <div>
               <Label htmlFor="relatedSlugsText">Related project slugs</Label>
+              <FieldHint>Portfolio slugs that prove this service (one per line).</FieldHint>
               <Textarea
                 id="relatedSlugsText"
                 name="relatedSlugsText"
                 rows={2}
                 defaultValue={lines(body.relatedSlugs)}
+                placeholder={"umutungo\numugina"}
               />
             </div>
           </div>
@@ -349,6 +384,7 @@ export function CmsEntryForm({
           <div className="space-y-4 rounded-md border border-border p-4">
             <div>
               <Label htmlFor="excerpt">Excerpt</Label>
+              <FieldHint>Short teaser for listings and SEO.</FieldHint>
               <Textarea
                 id="excerpt"
                 name="excerpt"
@@ -358,6 +394,7 @@ export function CmsEntryForm({
             </div>
             <div>
               <Label htmlFor="markdown">Markdown body</Label>
+              <FieldHint>Full article in Markdown.</FieldHint>
               <Textarea
                 id="markdown"
                 name="markdown"
@@ -374,34 +411,40 @@ export function CmsEntryForm({
           <div className="space-y-4 rounded-md border border-border p-4">
             <StatusBanner tone="info">
               Testimonials stay internal unless a real client approved them.
-              Phase 6 does not publish them to the public site.
+              They are not exported to the public site by default.
             </StatusBanner>
             <div>
               <Label htmlFor="quote">Quote</Label>
+              <FieldHint>Exact client wording — do not invent praise.</FieldHint>
               <Textarea
                 id="quote"
                 name="quote"
                 required
                 rows={4}
                 defaultValue={String(body.quote ?? "")}
+                placeholder="“The ops dashboard cut our weekly reconciliation time…”"
               />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <Label htmlFor="attribution">Attribution</Label>
+                <FieldHint>Person’s name as they want it shown.</FieldHint>
                 <Input
                   id="attribution"
                   name="attribution"
                   required
                   defaultValue={String(body.attribution ?? "")}
+                  placeholder="Jane Uwase"
                 />
               </div>
               <div>
                 <Label htmlFor="roleOrCompany">Role / company</Label>
+                <FieldHint>e.g. Operations lead, Acme Retail</FieldHint>
                 <Input
                   id="roleOrCompany"
                   name="roleOrCompany"
                   defaultValue={String(body.roleOrCompany ?? "")}
+                  placeholder="Operations lead, Acme Retail"
                 />
               </div>
             </div>

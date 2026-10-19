@@ -144,7 +144,9 @@ async function buildSnapshot(input: {
       legalName: settings.legalName,
       tradingName: settings.tradingName,
       taxId: settings.taxId,
+      supportEmail: settings.supportEmail,
       address: settings.addressJson ?? null,
+      logoStorageKey: settings.logoStorageKey,
     },
     client: {
       id: doc.client.id,

@@ -20,6 +20,7 @@ export function getStorage(): StorageDriver {
 }
 
 export {
+  buildPublicMediaObjectKey,
   buildVaultObjectKey,
   checksumSha256,
 } from "@/lib/storage/local";
