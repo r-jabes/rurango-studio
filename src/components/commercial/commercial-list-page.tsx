@@ -6,7 +6,9 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { DataTable } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
+import { StatusBanner } from "@/components/ui/status-banner";
 import {
+  isCoreCommercialType,
   statusTone,
   typeDescriptions,
   typeLabels,
@@ -67,6 +69,22 @@ export async function CommercialListPage({
           <ButtonLink href={`${base}/new`}>New {typeLabels[type].toLowerCase()}</ButtonLink>
         }
       />
+
+      {!isCoreCommercialType(type) ? (
+        <StatusBanner tone="info">
+          Default commercial path is{" "}
+          <strong className="font-medium text-foreground">
+            Quotation → Invoice → Payment
+          </strong>
+          . Use {typeLabels[type].toLowerCase()}s when that stage is genuinely
+          needed; they remain fully supported.
+        </StatusBanner>
+      ) : type === "quotation" ? (
+        <StatusBanner tone="info">
+          Typical flow: create a quotation, issue it, then invoice when billing,
+          and record receipts under Payments.
+        </StatusBanner>
+      ) : null}
 
       <ListFilters
         pathname={base}

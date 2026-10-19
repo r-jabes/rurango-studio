@@ -39,7 +39,7 @@ export default async function PaymentsPage({
     <div className="space-y-8">
       <PageHeader
         title="Payments"
-        description="Manual payment recording against issued invoices. Outstanding balance = invoice total − payments."
+        description="Last step of the core path (Quotation → Invoice → Payment). Record money received against issued invoices. Outstanding = invoice total − payments."
       />
 
       <div className="grid gap-4 sm:grid-cols-3">

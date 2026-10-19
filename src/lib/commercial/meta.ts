@@ -18,6 +18,17 @@ export const PRIMARY_COMMERCIAL_TYPES = [
 
 export type PrimaryCommercialType = (typeof PRIMARY_COMMERCIAL_TYPES)[number];
 
+/** Default day-to-day path: Quote → Invoice → Payment (payment is separate). */
+export const CORE_COMMERCIAL_TYPES = ["quotation", "invoice"] as const;
+
+export type CoreCommercialType = (typeof CORE_COMMERCIAL_TYPES)[number];
+
+export function isCoreCommercialType(
+  type: PrimaryCommercialType,
+): type is CoreCommercialType {
+  return (CORE_COMMERCIAL_TYPES as readonly string[]).includes(type);
+}
+
 export const COMMERCIAL_STATUSES = [
   "draft",
   "issued",
@@ -59,13 +70,13 @@ export const typeRoutes: Record<PrimaryCommercialType, string> = {
  */
 export const typeDescriptions: Record<PrimaryCommercialType, string> = {
   proposal:
-    "A narrative offer: problem, approach, and recommended scope. Pricing may be indicative. Used before a firm quote.",
+    "Occasional: narrative pitch before pricing. Prefer a quotation when the client mainly needs a firm price.",
   quotation:
-    "A priced offer the client can accept. Line items and totals are central; validity/expiry dates matter.",
+    "Core path — priced offer the client can accept. Usually the first commercial document you create.",
   agreement:
-    "The terms you and the client commit to after scope is clear. Narrative/body carries the obligations; signed copies are recorded later.",
+    "Occasional: mutual terms and signed copies for larger engagements. Skip for small fixed-scope work if a quote + invoice is enough.",
   invoice:
-    "A request for payment against agreed work. Due date and payment terms drive collection; payments are logged separately against the invoice.",
+    "Core path — request for payment after work is agreed. Record receipts under Payments.",
 };
 
 /** Guidance shown on create/edit forms for operators. */

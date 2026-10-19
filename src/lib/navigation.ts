@@ -20,12 +20,16 @@ export type NavItem = {
   label: string;
   description: string;
   icon: NavIcon;
+  /** Secondary items stay reachable but visually de-emphasized. */
+  secondary?: boolean;
 };
 
 export type NavGroup = {
   id: string;
   label: string;
   items: NavItem[];
+  /** Optional label above secondary items in this group. */
+  secondaryLabel?: string;
 };
 
 export const navGroups: NavGroup[] = [
@@ -74,36 +78,39 @@ export const navGroups: NavGroup[] = [
   {
     id: "commercial",
     label: "Commercial",
+    secondaryLabel: "Occasional",
     items: [
-      {
-        href: "/proposals",
-        label: "Proposals",
-        description: "Proposal drafts and issued documents.",
-        icon: "proposals",
-      },
       {
         href: "/quotations",
         label: "Quotations",
-        description: "Quotations and pricing documents.",
+        description: "Priced offers — the usual first commercial document.",
         icon: "quotations",
-      },
-      {
-        href: "/agreements",
-        label: "Agreements",
-        description: "Agreements and signed copies.",
-        icon: "agreements",
       },
       {
         href: "/invoices",
         label: "Invoices",
-        description: "Invoices and outstanding balances.",
+        description: "Requests for payment after work is agreed.",
         icon: "invoices",
       },
       {
         href: "/payments",
         label: "Payments",
-        description: "Payments, outstanding balances, and AR summary.",
+        description: "Record money received against issued invoices.",
         icon: "payments",
+      },
+      {
+        href: "/proposals",
+        label: "Proposals",
+        description: "Narrative pitches before a firm quote — use when scope needs explaining.",
+        icon: "proposals",
+        secondary: true,
+      },
+      {
+        href: "/agreements",
+        label: "Agreements",
+        description: "Signed terms for larger engagements — optional for small fixed jobs.",
+        icon: "agreements",
+        secondary: true,
       },
     ],
   },

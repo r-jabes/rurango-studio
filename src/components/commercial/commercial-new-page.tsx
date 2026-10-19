@@ -1,6 +1,8 @@
 import { CommercialDocForm } from "@/components/commercial/commercial-doc-form";
 import { PageHeader } from "@/components/ui/page-header";
+import { StatusBanner } from "@/components/ui/status-banner";
 import {
+  isCoreCommercialType,
   typeDescriptions,
   typeLabels,
   typeRoutes,
@@ -10,6 +12,7 @@ import { requireRole } from "@/lib/session";
 import { listClientOptions, listProjectOptions } from "@/server/documents/options";
 import { listTemplates } from "@/server/commercial/queries";
 import { db } from "@/db";
+import Link from "next/link";
 
 export async function CommercialNewPage({
   type,
@@ -30,6 +33,18 @@ export async function CommercialNewPage({
         title={`New ${typeLabels[type].toLowerCase()}`}
         description={`${typeDescriptions[type]} Issuing freezes commercial numbers into a snapshot and branded PDF.`}
       />
+      {!isCoreCommercialType(type) ? (
+        <StatusBanner tone="info">
+          Need a firm price instead?{" "}
+          <Link
+            href="/quotations/new"
+            className="font-medium text-foreground underline-offset-2 hover:underline"
+          >
+            Start from a quotation
+          </Link>
+          . Proposals and agreements are optional for larger or less-defined work.
+        </StatusBanner>
+      ) : null}
       <CommercialDocForm
         mode="create"
         type={type}
