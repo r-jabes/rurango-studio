@@ -124,7 +124,7 @@ export function DocumentActions({
             Void document
           </Button>
           <p className="text-xs text-foreground-secondary">
-            Voiding preserves the issued snapshot. Create a new draft to reissue.
+            Voiding keeps the issued PDF on file. Create a new draft to reissue.
           </p>
         </div>
       ) : null}
@@ -144,8 +144,8 @@ export function DocumentActions({
         >
           <h3 className="text-sm font-medium">Record signed copy</h3>
           <p className="text-xs text-foreground-secondary">
-            Upload a signed PDF or image and record who signed. This is{" "}
-            <strong>not</strong> a legally binding electronic signature workflow.
+            Attach a countersigned PDF or image and note who signed. This archives
+            the file for your records; it does not create an electronic signature.
           </p>
           <div>
             <Label htmlFor="signedByName">Signed by</Label>

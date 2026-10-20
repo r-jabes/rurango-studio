@@ -41,7 +41,7 @@ export function HandoverForm({ projectId }: { projectId: string }) {
           <Label htmlFor="file">Optional artifact</Label>
           <Input id="file" name="file" type="file" />
           <p className="mt-1 text-xs text-foreground-muted">
-            Stores a handover file reference — not a legally binding e-signature.
+            Optional attachment stored with the handover record.
           </p>
         </div>
       </div>

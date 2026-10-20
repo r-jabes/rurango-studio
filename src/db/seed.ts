@@ -104,7 +104,7 @@ async function seed() {
         name: "Standard agreement",
         defaultPaymentTerms: "As specified in the payment schedule",
         defaultNotes:
-          "Upload a wet-ink or countersigned PDF under signed copy after issue.",
+          "Attach a countersigned PDF under signed copy after issue.",
       },
       {
         type: "invoice",

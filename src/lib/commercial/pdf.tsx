@@ -420,8 +420,7 @@ function CommercialPdfDocument({
           <View style={styles.footerInner}>
             <Text>
               {snapshot.company.tradingName} · {snapshot.document.number} ·
-              Snapshot {snapshot.issuedAt.slice(0, 10)}. This PDF is the frozen
-              commercial record — not a legally binding electronic signature.
+              Issued {snapshot.issuedAt.slice(0, 10)}
             </Text>
           </View>
         </View>

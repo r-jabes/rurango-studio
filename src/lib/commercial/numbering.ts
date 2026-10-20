@@ -1,9 +1,10 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { ExtractTablesWithRelations } from "drizzle-orm";
 import type { PgTransaction } from "drizzle-orm/pg-core";
 import type { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
+import { randomBytes } from "node:crypto";
 import * as schema from "@/db/schema";
-import { commercialNumberSequences, companySettings } from "@/db/schema";
+import { commercialDocuments, companySettings } from "@/db/schema";
 import {
   type PrimaryCommercialType,
   prefixFieldByType,
@@ -15,48 +16,47 @@ type Tx = PgTransaction<
   ExtractTablesWithRelations<typeof schema>
 >;
 
+/** Ambiguity-safe alphabet (no 0/O, 1/I/L). */
+const REF_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+const REF_LENGTH = 8;
+const MAX_ATTEMPTS = 12;
+
+function opaqueReference(length = REF_LENGTH): string {
+  const bytes = randomBytes(length);
+  let out = "";
+  for (let i = 0; i < length; i++) {
+    out += REF_ALPHABET[bytes[i]! % REF_ALPHABET.length];
+  }
+  return out;
+}
+
+/**
+ * Allocates a non-sequential document number: `{PREFIX}-{8 char ref}`.
+ * Avoids year/serial formats that reveal how many documents have been issued.
+ */
 export async function nextDocumentNumber(
   tx: Tx,
   type: PrimaryCommercialType,
 ): Promise<string> {
-  const year = new Date().getFullYear();
-
-  const existing = await tx.query.commercialNumberSequences.findFirst({
-    where: and(
-      eq(commercialNumberSequences.docType, type),
-      eq(commercialNumberSequences.year, year),
-    ),
-  });
-
-  let nextSeq: number;
-  if (!existing) {
-    await tx.insert(commercialNumberSequences).values({
-      docType: type,
-      year,
-      lastSeq: 1,
-    });
-    nextSeq = 1;
-  } else {
-    const [updated] = await tx
-      .update(commercialNumberSequences)
-      .set({ lastSeq: sql`${commercialNumberSequences.lastSeq} + 1` })
-      .where(
-        and(
-          eq(commercialNumberSequences.docType, type),
-          eq(commercialNumberSequences.year, year),
-        ),
-      )
-      .returning({ lastSeq: commercialNumberSequences.lastSeq });
-    nextSeq = updated.lastSeq;
-  }
-
   const settings = await tx.query.companySettings.findFirst();
   const prefixField = prefixFieldByType[type];
   const prefix =
     (settings?.[prefixField] as string | undefined)?.trim() ||
     defaultPrefix(type);
 
-  return `${prefix}-${year}-${String(nextSeq).padStart(4, "0")}`;
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const candidate = `${prefix}-${opaqueReference()}`;
+    const clash = await tx.query.commercialDocuments.findFirst({
+      where: and(
+        eq(commercialDocuments.type, type),
+        eq(commercialDocuments.number, candidate),
+      ),
+      columns: { id: true },
+    });
+    if (!clash) return candidate;
+  }
+
+  throw new Error("Could not allocate a unique document number. Try again.");
 }
 
 function defaultPrefix(type: PrimaryCommercialType) {

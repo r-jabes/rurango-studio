@@ -141,6 +141,14 @@ export function CompanySettingsForm({ defaults }: CompanySettingsFormProps) {
             defaultValue={defaults.addressJson?.country}
           />
         </div>
+        <div className="sm:col-span-2">
+          <p className="mb-2 text-xs text-foreground-secondary">
+            Document number prefixes. Each new document gets{" "}
+            <code className="font-mono">{`{PREFIX}-{8-character reference}`}</code>{" "}
+            (for example INV-K7M2XQ9P). References are random so clients cannot
+            infer how many documents you have issued.
+          </p>
+        </div>
         <div>
           <Label htmlFor="proposalPrefix">Proposal prefix</Label>
           <Input

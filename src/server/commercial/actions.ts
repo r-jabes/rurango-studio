@@ -436,7 +436,7 @@ export async function issueCommercialDocumentAction(
   });
 
   revalidateCommercial(existing.type, documentId);
-  return ok(undefined, "Document issued. Snapshot and PDF are now frozen.");
+  return ok(undefined, "Document issued. The PDF is ready to download.");
 }
 
 export async function voidCommercialDocumentAction(
@@ -593,7 +593,7 @@ export async function uploadSignedCopyAction(
     clientId: existing.clientId,
     projectId: existing.projectId,
     type: "commercial.agreement.signed_copy_recorded",
-    summary: `Recorded signed copy metadata for ${existing.number} (not an e-signature).`,
+    summary: `Recorded signed copy for ${existing.number}.`,
     metadata: {
       commercialDocumentId: documentId,
       signedByName: parsed.data.signedByName,
@@ -603,10 +603,7 @@ export async function uploadSignedCopyAction(
   });
 
   revalidateCommercial("agreement", documentId);
-  return ok(
-    undefined,
-    "Signed copy stored. This records an uploaded file and metadata — it is not a legally binding electronic signature.",
-  );
+  return ok(undefined, "Signed copy archived with this agreement.");
 }
 
 export async function createTemplateAction(

@@ -31,7 +31,7 @@ export async function CommercialNewPage({
     <div className="space-y-6">
       <PageHeader
         title={`New ${typeLabels[type].toLowerCase()}`}
-        description={`${typeDescriptions[type]} Issuing freezes commercial numbers into a snapshot and branded PDF.`}
+        description={`${typeDescriptions[type]} Issuing locks the document into a branded PDF.`}
       />
       {!isCoreCommercialType(type) ? (
         <StatusBanner tone="info">
@@ -54,9 +54,9 @@ export async function CommercialNewPage({
         defaultCurrency={settings?.defaultCurrency ?? "RWF"}
       />
       <p className="text-xs text-foreground-secondary">
-        After save you can issue from the detail page. Number series uses{" "}
-        <code className="font-mono">{typeRoutes[type]}</code> prefixes from
-        company settings.
+        After save you can issue from the detail page. Document numbers use your{" "}
+        <code className="font-mono">{typeRoutes[type]}</code> prefix plus a
+        random reference (for example INV-K7M2XQ9P), configured in company settings.
       </p>
     </div>
   );

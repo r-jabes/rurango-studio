@@ -71,8 +71,8 @@ export async function CommercialDetailPage({
 
       {doc.status !== "draft" && snapshot ? (
         <StatusBanner tone="info">
-          Issued content is frozen in a snapshot. Editing the live draft fields
-          is blocked; void and create a new document to reissue.
+          This document has been issued. The commercial record is locked; void it
+          and create a new document if you need to reissue.
         </StatusBanner>
       ) : null}
 
@@ -89,7 +89,6 @@ export async function CommercialDetailPage({
           >
             Download signed file
           </Link>
-          . This records an uploaded artifact — not a legally binding e-signature.
         </StatusBanner>
       ) : null}
 
