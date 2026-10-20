@@ -413,6 +413,21 @@ function CommercialPdfDocument({
               <Text>{snapshot.document.notes}</Text>
             </View>
           ) : null}
+
+          {snapshot.document.type === "invoice" &&
+          snapshot.company.invoicePaymentDetails?.trim() ? (
+            <View style={styles.section}>
+              <Text style={styles.label}>Payment details</Text>
+              {snapshot.company.invoicePaymentDetails
+                .trim()
+                .split(/\r?\n/)
+                .map((line, index) => (
+                  <Text key={index} style={{ marginTop: index === 0 ? 0 : 2 }}>
+                    {line.length > 0 ? line : " "}
+                  </Text>
+                ))}
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.footer} fixed>

@@ -18,6 +18,8 @@ export const companySettings = pgTable("company_settings", {
   taxId: text("tax_id"),
   supportEmail: text("support_email"),
   logoStorageKey: text("logo_storage_key"),
+  /** Freeform bank / MoMo / transfer instructions shown on issued invoices. */
+  invoicePaymentDetails: text("invoice_payment_details"),
   invoicePrefix: text("invoice_prefix").notNull().default("INV"),
   quotationPrefix: text("quotation_prefix").notNull().default("QUO"),
   proposalPrefix: text("proposal_prefix").notNull().default("PRO"),

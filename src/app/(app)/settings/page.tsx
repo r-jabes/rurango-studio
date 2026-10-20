@@ -46,6 +46,7 @@ export default async function SettingsPage() {
     taxId: settings?.taxId ?? null,
     supportEmail: settings?.supportEmail ?? null,
     addressJson: settings?.addressJson ?? null,
+    invoicePaymentDetails: settings?.invoicePaymentDetails ?? null,
     invoicePrefix: settings?.invoicePrefix ?? "INV",
     quotationPrefix: settings?.quotationPrefix ?? "QUO",
     proposalPrefix: settings?.proposalPrefix ?? "PRO",

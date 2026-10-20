@@ -43,6 +43,8 @@ export type CommercialSnapshot = {
     address: Record<string, string> | null;
     /** Vault key for company logo used when rendering branded PDFs. */
     logoStorageKey?: string | null;
+    /** Frozen payment instructions for invoice PDFs. */
+    invoicePaymentDetails?: string | null;
   };
   client: {
     id: string;

@@ -50,6 +50,13 @@
       "when": 1760736000000,
       "tag": "0006_phase7_settings_backups_mfa",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1760737000000,
+      "tag": "0007_invoice_payment_details",
+      "breakpoints": true
     }
   ]
 }

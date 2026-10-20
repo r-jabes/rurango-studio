@@ -147,6 +147,7 @@ async function buildSnapshot(input: {
       supportEmail: settings.supportEmail,
       address: settings.addressJson ?? null,
       logoStorageKey: settings.logoStorageKey,
+      invoicePaymentDetails: settings.invoicePaymentDetails,
     },
     client: {
       id: doc.client.id,

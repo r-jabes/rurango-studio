@@ -36,6 +36,18 @@ export const companySettingsInputSchema = z.object({
     .string()
     .optional()
     .transform((v) => (v === "" || v === undefined ? null : v.trim())),
+  invoicePaymentDetails: z
+    .string()
+    .optional()
+    .transform((v) => {
+      if (v === undefined) return null;
+      const trimmed = v.trim();
+      return trimmed === "" ? null : trimmed;
+    })
+    .refine(
+      (v) => v === null || v.length <= 4000,
+      "Payment instructions must be 4000 characters or fewer.",
+    ),
   invoicePrefix: z.string().trim().min(1).max(12),
   quotationPrefix: z.string().trim().min(1).max(12),
   proposalPrefix: z.string().trim().min(1).max(12),

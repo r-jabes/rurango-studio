@@ -5,6 +5,7 @@ import { FieldError } from "@/components/ui/field-error";
 import { FieldHint } from "@/components/ui/field-hint";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useActionFeedback } from "@/lib/use-action-feedback";
 import { updateCompanySettingsAction } from "@/server/settings/actions";
 
@@ -16,6 +17,7 @@ type CompanySettingsFormProps = {
     taxId?: string | null;
     supportEmail?: string | null;
     addressJson?: Record<string, string> | null;
+    invoicePaymentDetails?: string | null;
     invoicePrefix: string;
     quotationPrefix: string;
     proposalPrefix: string;
@@ -140,6 +142,25 @@ export function CompanySettingsForm({ defaults }: CompanySettingsFormProps) {
             name="addressCountry"
             defaultValue={defaults.addressJson?.country}
           />
+        </div>
+        <div className="sm:col-span-2">
+          <Label htmlFor="invoicePaymentDetails">
+            Payment instructions (invoices)
+          </Label>
+          <FieldHint>
+            Bank transfer, mobile money, or other how-to-pay details. Copied onto
+            issued invoices; leave blank to omit the section.
+          </FieldHint>
+          <Textarea
+            id="invoicePaymentDetails"
+            name="invoicePaymentDetails"
+            rows={5}
+            defaultValue={defaults.invoicePaymentDetails ?? undefined}
+            placeholder={
+              "Bank: Example Bank\nAccount name: RURANGO\nAccount number: …\nMTN MoMo: …"
+            }
+          />
+          <FieldError errors={fieldErrors.invoicePaymentDetails} />
         </div>
         <div className="sm:col-span-2">
           <p className="mb-2 text-xs text-foreground-secondary">
