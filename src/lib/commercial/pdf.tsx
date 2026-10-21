@@ -23,15 +23,26 @@ const brand = {
   rowBorder: "#E8EBE6",
 };
 
+/** Page margins so wrapped content never sits flush to edges. */
+const PAGE_PAD_X = 40;
+const PAGE_PAD_TOP = 48;
+const PAGE_PAD_BOTTOM = 64;
+
 const styles = StyleSheet.create({
   page: {
-    paddingTop: 0,
-    paddingBottom: 56,
-    paddingHorizontal: 0,
+    paddingTop: PAGE_PAD_TOP,
+    paddingBottom: PAGE_PAD_BOTTOM,
+    paddingHorizontal: PAGE_PAD_X,
     fontSize: 10,
     fontFamily: "Helvetica",
     color: brand.charcoal,
     backgroundColor: "#FFFFFF",
+  },
+  /** Full-bleed brand block on page 1 only (pulls into page padding). */
+  coverHeader: {
+    marginTop: -PAGE_PAD_TOP,
+    marginHorizontal: -PAGE_PAD_X,
+    marginBottom: 28,
   },
   accentBar: {
     height: 6,
@@ -41,7 +52,7 @@ const styles = StyleSheet.create({
     backgroundColor: brand.charcoal,
     paddingTop: 22,
     paddingBottom: 22,
-    paddingHorizontal: 40,
+    paddingHorizontal: PAGE_PAD_X,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
@@ -91,9 +102,33 @@ const styles = StyleSheet.create({
     fontSize: 8,
     textAlign: "right",
   },
-  body: {
-    paddingHorizontal: 40,
-    paddingTop: 28,
+  /** Thin brand accent on every page; blends into the thicker page-1 bar. */
+  runningHeaderAccent: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    backgroundColor: brand.green,
+  },
+  /** Continuation identity only — no background so page 1 brand is not covered. */
+  runningHeaderLeft: {
+    position: "absolute",
+    top: 16,
+    left: PAGE_PAD_X,
+    right: 160,
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    letterSpacing: 0.4,
+    color: brand.charcoal,
+  },
+  runningHeaderRight: {
+    position: "absolute",
+    top: 16,
+    right: PAGE_PAD_X,
+    fontSize: 8,
+    color: brand.muted,
+    textAlign: "right",
   },
   titleBlock: {
     marginBottom: 20,
@@ -191,11 +226,14 @@ const styles = StyleSheet.create({
     backgroundColor: brand.green,
   },
   footerInner: {
-    paddingHorizontal: 40,
+    paddingHorizontal: PAGE_PAD_X,
     paddingVertical: 10,
     backgroundColor: brand.offWhite,
     fontSize: 7,
     color: brand.muted,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
 });
 
@@ -224,67 +262,89 @@ function CommercialPdfDocument({
       author={snapshot.company.tradingName}
       subject={typeLabel}
     >
-      <Page size="A4" style={styles.page}>
-        <View style={styles.accentBar} />
+      <Page size="A4" style={styles.page} wrap>
+        <View style={styles.runningHeaderAccent} fixed />
+        <Text
+          style={styles.runningHeaderLeft}
+          fixed
+          render={({ pageNumber }) =>
+            pageNumber > 1
+              ? `${snapshot.company.tradingName}  ·  ${typeLabel.toUpperCase()}`
+              : ""
+          }
+        />
+        <Text
+          style={styles.runningHeaderRight}
+          fixed
+          render={({ pageNumber }) =>
+            pageNumber > 1 ? snapshot.document.number : ""
+          }
+        />
 
-        <View style={styles.headerBand}>
-          <View style={styles.brandBlock}>
-            {logoSrc ? (
-              // eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image
-              <Image src={logoSrc} style={styles.logo} />
-            ) : (
-              <View>
-                <Text style={styles.brandFallback}>
-                  {snapshot.company.tradingName}
-                </Text>
-              </View>
-            )}
-            <View>
+        {/* Page 1 only: full-bleed brand header. */}
+        <View style={styles.coverHeader} wrap={false}>
+          <View style={styles.accentBar} />
+          <View style={styles.headerBand}>
+            <View style={styles.brandBlock}>
               {logoSrc ? (
-                <Text
-                  style={{
-                    fontSize: 11,
-                    fontFamily: "Helvetica-Bold",
-                    color: brand.offWhite,
-                    letterSpacing: 0.6,
-                  }}
-                >
-                  {snapshot.company.tradingName}
-                </Text>
-              ) : null}
-              {snapshot.company.legalName !== snapshot.company.tradingName ? (
-                <Text style={styles.brandSub}>{snapshot.company.legalName}</Text>
-              ) : null}
-              {snapshot.company.supportEmail ? (
-                <Text style={styles.brandSub}>
-                  {snapshot.company.supportEmail}
-                </Text>
-              ) : null}
-              {addressLines.map((line) => (
-                <Text key={line} style={styles.brandSub}>
-                  {line}
-                </Text>
-              ))}
-              {snapshot.company.taxId ? (
-                <Text style={styles.brandSub}>
-                  Tax ID: {snapshot.company.taxId}
+                // eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image
+                <Image src={logoSrc} style={styles.logo} />
+              ) : (
+                <View>
+                  <Text style={styles.brandFallback}>
+                    {snapshot.company.tradingName}
+                  </Text>
+                </View>
+              )}
+              <View>
+                {logoSrc ? (
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      fontFamily: "Helvetica-Bold",
+                      color: brand.offWhite,
+                      letterSpacing: 0.6,
+                    }}
+                  >
+                    {snapshot.company.tradingName}
+                  </Text>
+                ) : null}
+                {snapshot.company.legalName !== snapshot.company.tradingName ? (
+                  <Text style={styles.brandSub}>
+                    {snapshot.company.legalName}
+                  </Text>
+                ) : null}
+                {snapshot.company.supportEmail ? (
+                  <Text style={styles.brandSub}>
+                    {snapshot.company.supportEmail}
+                  </Text>
+                ) : null}
+                {addressLines.map((line) => (
+                  <Text key={line} style={styles.brandSub}>
+                    {line}
+                  </Text>
+                ))}
+                {snapshot.company.taxId ? (
+                  <Text style={styles.brandSub}>
+                    Tax ID: {snapshot.company.taxId}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+
+            <View>
+              <Text style={styles.docTypeBadge}>{typeLabel.toUpperCase()}</Text>
+              <Text style={styles.docMetaRight}>{snapshot.document.number}</Text>
+              {snapshot.document.issueDate ? (
+                <Text style={styles.docMetaMuted}>
+                  Issued {snapshot.document.issueDate}
                 </Text>
               ) : null}
             </View>
           </View>
-
-          <View>
-            <Text style={styles.docTypeBadge}>{typeLabel.toUpperCase()}</Text>
-            <Text style={styles.docMetaRight}>{snapshot.document.number}</Text>
-            {snapshot.document.issueDate ? (
-              <Text style={styles.docMetaMuted}>
-                Issued {snapshot.document.issueDate}
-              </Text>
-            ) : null}
-          </View>
         </View>
 
-        <View style={styles.body}>
+        <View>
           <View style={styles.titleBlock}>
             <Text style={styles.docTitle}>{snapshot.document.title}</Text>
             <Text style={styles.legalLine}>
@@ -377,7 +437,7 @@ function CommercialPdfDocument({
             </View>
           ))}
 
-          <View style={styles.totals}>
+          <View style={styles.totals} wrap={false}>
             <View style={styles.totalRow}>
               <Text>Subtotal</Text>
               <Text>
@@ -408,7 +468,7 @@ function CommercialPdfDocument({
           </View>
 
           {snapshot.document.notes ? (
-            <View style={styles.section}>
+            <View style={styles.section} wrap={false}>
               <Text style={styles.label}>Notes</Text>
               <Text>{snapshot.document.notes}</Text>
             </View>
@@ -416,7 +476,7 @@ function CommercialPdfDocument({
 
           {snapshot.document.type === "invoice" &&
           snapshot.company.invoicePaymentDetails?.trim() ? (
-            <View style={styles.section}>
+            <View style={styles.section} wrap={false}>
               <Text style={styles.label}>Payment details</Text>
               {snapshot.company.invoicePaymentDetails
                 .trim()
@@ -437,6 +497,11 @@ function CommercialPdfDocument({
               {snapshot.company.tradingName} · {snapshot.document.number} ·
               Issued {snapshot.issuedAt.slice(0, 10)}
             </Text>
+            <Text
+              render={({ pageNumber, totalPages }) =>
+                totalPages > 1 ? `Page ${pageNumber} of ${totalPages}` : " "
+              }
+            />
           </View>
         </View>
       </Page>
