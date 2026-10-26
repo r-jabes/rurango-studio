@@ -4,6 +4,7 @@ import { nextCookies } from "better-auth/next-js";
 import { twoFactor } from "better-auth/plugins";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
+import { sendStudioEmail } from "@/lib/email/resend";
 import { getStudioUrl } from "@/lib/site-url";
 
 export const auth = betterAuth({
@@ -24,6 +25,34 @@ export const auth = betterAuth({
     enabled: true,
     // Owner accounts are created via the development seed script only.
     disableSignUp: true,
+    async sendResetPassword({ user, url }) {
+      const result = await sendStudioEmail({
+        to: user.email,
+        subject: "Reset your Rurango Studio password",
+        text: [
+          `Hello${user.name ? ` ${user.name}` : ""},`,
+          "",
+          "We received a request to reset your Rurango Studio password.",
+          "Open the link below to choose a new password. This link expires soon.",
+          "",
+          url,
+          "",
+          "If you did not request this, you can ignore this email.",
+          "",
+          "— Rurango Studio",
+        ].join("\n"),
+        html: `
+          <p>Hello${user.name ? ` ${escapeHtml(user.name)}` : ""},</p>
+          <p>We received a request to reset your Rurango Studio password.</p>
+          <p><a href="${escapeHtml(url)}">Reset your password</a></p>
+          <p>If you did not request this, you can ignore this email.</p>
+          <p>— Rurango Studio</p>
+        `.trim(),
+      });
+      if (!result.ok) {
+        throw new Error(result.error);
+      }
+    },
   },
   user: {
     additionalFields: {
@@ -60,3 +89,12 @@ export const auth = betterAuth({
 });
 
 export type Session = typeof auth.$Infer.Session;
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}

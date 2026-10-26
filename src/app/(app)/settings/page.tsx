@@ -1,4 +1,5 @@
 import { TemplateForm } from "@/components/commercial/template-form";
+import { AuditLogList } from "@/components/settings/audit-log-list";
 import { CompanySettingsForm } from "@/components/settings/company-settings-form";
 import { MfaPanel } from "@/components/settings/mfa-panel";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +33,7 @@ export default async function SettingsPage() {
     settings = await getCompanySettings();
     templates = await listAllTemplates();
     if (role === "owner") {
-      audit = await listRecentAuditLogs(25);
+      audit = await listRecentAuditLogs(100);
     }
   } catch {
     settingsError =
@@ -140,25 +141,7 @@ export default async function SettingsPage() {
       {role === "owner" ? (
         <section className="rounded-xl border border-border bg-surface/50 p-5">
           <h2 className="mb-3 text-sm font-medium">Recent audit events</h2>
-          {audit.length === 0 ? (
-            <p className="text-sm text-foreground-muted">No audit events yet.</p>
-          ) : (
-            <ul className="space-y-2 text-sm">
-              {audit.map((row) => (
-                <li
-                  key={row.id}
-                  className="border-t border-border pt-2 first:border-0 first:pt-0"
-                >
-                  <p className="font-medium">{row.action}</p>
-                  <p className="text-xs text-foreground-muted">
-                    {row.createdAt.toLocaleString()}
-                    {row.entityType ? ` · ${row.entityType}` : ""}
-                    {row.entityId ? ` · ${row.entityId}` : ""}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
+          <AuditLogList rows={audit} />
         </section>
       ) : null}
     </div>

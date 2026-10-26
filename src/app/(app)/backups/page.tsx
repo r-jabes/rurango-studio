@@ -1,18 +1,11 @@
+import { BackupRunsList } from "@/components/settings/backup-runs-list";
 import { BackupTriggerForm } from "@/components/settings/backup-trigger-form";
-import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBanner } from "@/components/ui/status-banner";
 import { requireRole } from "@/lib/session";
 import { listBackupRuns } from "@/server/settings/queries";
 
 export const metadata = { title: "Backups" };
-
-function statusTone(status: string): "neutral" | "success" | "warning" | "danger" {
-  if (status === "succeeded") return "success";
-  if (status === "running") return "warning";
-  if (status === "failed") return "danger";
-  return "neutral";
-}
 
 export default async function BackupsPage() {
   await requireRole(["owner"]);
@@ -82,35 +75,7 @@ export default async function BackupsPage() {
 
       <section className="space-y-3">
         <h2 className="text-sm font-medium">Recent runs</h2>
-        {runs.length === 0 ? (
-          <p className="text-sm text-foreground-muted">No backup runs yet.</p>
-        ) : (
-          <ul className="space-y-3">
-            {runs.map((run) => (
-              <li
-                key={run.id}
-                className="rounded-xl border border-border bg-surface/40 p-4 text-sm"
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge tone={statusTone(run.status)}>{run.status}</Badge>
-                  <Badge tone="neutral">{run.kind}</Badge>
-                  <span className="text-foreground-secondary">
-                    {run.startedAt.toLocaleString()}
-                  </span>
-                </div>
-                {run.destinationRef ? (
-                  <p className="mt-2 font-mono text-xs text-foreground-muted">
-                    {run.destinationRef}
-                    {run.byteSize != null ? ` · ${run.byteSize} bytes` : ""}
-                  </p>
-                ) : null}
-                {run.errorMessage ? (
-                  <p className="mt-2 text-red-200">{run.errorMessage}</p>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        )}
+        <BackupRunsList runs={runs} />
       </section>
     </div>
   );

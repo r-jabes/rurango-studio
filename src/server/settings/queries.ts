@@ -6,14 +6,14 @@ export async function getCompanySettings() {
   return db.query.companySettings.findFirst();
 }
 
-export async function listBackupRuns(limit = 30) {
+export async function listBackupRuns(limit = 100) {
   return db.query.backupRuns.findMany({
     orderBy: [desc(backupRuns.startedAt)],
     limit,
   });
 }
 
-export async function listRecentAuditLogs(limit = 40) {
+export async function listRecentAuditLogs(limit = 100) {
   return db
     .select()
     .from(auditLogs)

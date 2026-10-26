@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ActivityTimeline } from "@/components/crm/activity-timeline";
 import { ArchiveButton } from "@/components/crm/archive-button";
 import { NoteForm } from "@/components/crm/note-form";
+import { NotesList } from "@/components/crm/notes-list";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button-link";
 import { PageHeader } from "@/components/ui/page-header";
@@ -32,7 +33,7 @@ export default async function ClientDetailPage({
   if (!client) notFound();
 
   const [activity, notes] = await Promise.all([
-    listActivities({ clientId: id, limit: 25 }),
+    listActivities({ clientId: id, limit: 100 }),
     listClientNotes(id),
   ]);
 
@@ -123,17 +124,16 @@ export default async function ClientDetailPage({
         <div className="rounded-xl border border-border bg-surface/40 p-5">
           <h2 className="mb-4 text-sm font-medium">Notes</h2>
           <NoteForm clientId={id} />
-          <ul className="mt-6 space-y-4">
-            {notes.map((note) => (
-              <li key={note.id} className="border-t border-border pt-4 text-sm">
-                <p className="whitespace-pre-wrap text-foreground">{note.body}</p>
-                <p className="mt-2 text-xs text-foreground-muted">
-                  {note.author?.name ?? "Unknown"} ·{" "}
-                  {note.createdAt.toLocaleString()}
-                </p>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-6">
+            <NotesList
+              notes={notes.map((note) => ({
+                id: note.id,
+                body: note.body,
+                createdAt: note.createdAt,
+                authorName: note.author?.name,
+              }))}
+            />
+          </div>
         </div>
 
         <div className="rounded-xl border border-border bg-surface/40 p-5">

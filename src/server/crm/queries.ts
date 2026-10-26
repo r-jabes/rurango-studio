@@ -183,7 +183,7 @@ export async function listActivities(options: {
     .from(activities)
     .where(where)
     .orderBy(desc(activities.createdAt))
-    .limit(options.limit ?? 30);
+    .limit(options.limit ?? 100);
 }
 
 export async function listClientNotes(clientId: string) {

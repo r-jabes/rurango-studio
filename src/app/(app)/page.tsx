@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { count, eq, ne } from "drizzle-orm";
+import { DashboardMetrics } from "@/components/dashboard/dashboard-metrics";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBanner } from "@/components/ui/status-banner";
 import { db } from "@/db";
 import { clients, projects } from "@/db/schema";
-import { formatMoney } from "@/lib/money";
 import { primaryNav } from "@/lib/navigation";
 import { requireSession } from "@/lib/session";
 import { getArSummary } from "@/server/finance/queries";
@@ -55,43 +55,11 @@ export default async function DashboardPage() {
       {loadError ? (
         <StatusBanner tone="warning">{loadError}</StatusBanner>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-xl border border-border bg-surface/50 p-5">
-            <p className="text-xs uppercase tracking-wide text-foreground-muted">
-              Active clients
-            </p>
-            <p className="mt-2 text-3xl font-semibold tabular-nums">
-              {activeClients}
-            </p>
-          </div>
-          <div className="rounded-xl border border-border bg-surface/50 p-5">
-            <p className="text-xs uppercase tracking-wide text-foreground-muted">
-              Open projects
-            </p>
-            <p className="mt-2 text-3xl font-semibold tabular-nums">
-              {openProjects}
-            </p>
-          </div>
-          <div className="rounded-xl border border-border bg-surface/50 p-5">
-            <p className="text-xs uppercase tracking-wide text-foreground-muted">
-              Accounts receivable
-            </p>
-            <p className="mt-2 text-3xl font-semibold tabular-nums">
-              {ar ? formatMoney(ar.outstandingMinor, ar.currency) : "—"}
-            </p>
-            <p className="mt-1 text-xs text-foreground-secondary">
-              {ar?.openCount ?? 0} open
-            </p>
-          </div>
-          <div className="rounded-xl border border-border bg-surface/50 p-5">
-            <p className="text-xs uppercase tracking-wide text-foreground-muted">
-              Collected
-            </p>
-            <p className="mt-2 text-3xl font-semibold tabular-nums">
-              {ar ? formatMoney(ar.collectedMinor, ar.currency) : "—"}
-            </p>
-          </div>
-        </div>
+        <DashboardMetrics
+          activeClients={activeClients}
+          openProjects={openProjects}
+          ar={ar}
+        />
       )}
 
       <section className="space-y-3">

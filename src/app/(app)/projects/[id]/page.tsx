@@ -3,6 +3,8 @@ import { ActivityTimeline } from "@/components/crm/activity-timeline";
 import { ArchiveButton } from "@/components/crm/archive-button";
 import { MilestoneForm } from "@/components/crm/milestone-form";
 import { NoteForm } from "@/components/crm/note-form";
+import { NotesList } from "@/components/crm/notes-list";
+import { RecordList } from "@/components/crm/record-list";
 import { TaskForm } from "@/components/crm/task-form";
 import { TaskStatusSelect } from "@/components/crm/task-status-select";
 import { DeploymentForm } from "@/components/finance/deployment-form";
@@ -38,7 +40,7 @@ export default async function ProjectDetailPage({
   if (!project) notFound();
 
   const [activity, deployments, qaChecklists, handovers] = await Promise.all([
-    listActivities({ projectId: id, limit: 30 }),
+    listActivities({ projectId: id, limit: 100 }),
     listDeploymentsForProject(id),
     listQaForProject(id),
     listHandoversForProject(id),
@@ -152,15 +154,13 @@ export default async function ProjectDetailPage({
         <div className="rounded-xl border border-border bg-surface/40 p-5">
           <h2 className="mb-4 text-sm font-medium">Deployments</h2>
           <DeploymentForm projectId={id} />
-          <ul className="mt-6 space-y-3">
-            {deployments.length === 0 ? (
-              <li className="text-sm text-foreground-muted">No deployments yet.</li>
-            ) : (
-              deployments.map((deployment) => (
-                <li
-                  key={deployment.id}
-                  className="border-t border-border pt-3 text-sm"
-                >
+          <div className="mt-6">
+            <RecordList
+              items={deployments}
+              emptyLabel="No deployments yet."
+              getKey={(d) => d.id}
+              renderItem={(deployment) => (
+                <div className="border-t border-border pt-3 text-sm">
                   <p className="font-medium">
                     {deployment.environment ?? "Deployment"}
                   </p>
@@ -179,12 +179,14 @@ export default async function ProjectDetailPage({
                     {deployment.creator?.name ?? "Unknown"}
                   </p>
                   {deployment.notes ? (
-                    <p className="mt-1 text-foreground-secondary">{deployment.notes}</p>
+                    <p className="mt-1 text-foreground-secondary">
+                      {deployment.notes}
+                    </p>
                   ) : null}
-                </li>
-              ))
-            )}
-          </ul>
+                </div>
+              )}
+            />
+          </div>
         </div>
 
         <div className="rounded-xl border border-border bg-surface/40 p-5">
@@ -202,15 +204,13 @@ export default async function ProjectDetailPage({
         <div className="rounded-xl border border-border bg-surface/40 p-5">
           <h2 className="mb-4 text-sm font-medium">Handover</h2>
           <HandoverForm projectId={id} />
-          <ul className="mt-6 space-y-3">
-            {handovers.length === 0 ? (
-              <li className="text-sm text-foreground-muted">No handover records yet.</li>
-            ) : (
-              handovers.map((handover) => (
-                <li
-                  key={handover.id}
-                  className="border-t border-border pt-3 text-sm"
-                >
+          <div className="mt-6">
+            <RecordList
+              items={handovers}
+              emptyLabel="No handover records yet."
+              getKey={(h) => h.id}
+              renderItem={(handover) => (
+                <div className="border-t border-border pt-3 text-sm">
                   <p className="font-medium">
                     {handover.acceptedByName
                       ? `Accepted by ${handover.acceptedByName}`
@@ -234,10 +234,10 @@ export default async function ProjectDetailPage({
                       Download artifact
                     </a>
                   ) : null}
-                </li>
-              ))
-            )}
-          </ul>
+                </div>
+              )}
+            />
+          </div>
         </div>
       </section>
 
@@ -245,17 +245,16 @@ export default async function ProjectDetailPage({
         <div className="rounded-xl border border-border bg-surface/40 p-5">
           <h2 className="mb-4 text-sm font-medium">Notes</h2>
           <NoteForm projectId={id} />
-          <ul className="mt-6 space-y-4">
-            {project.notes.map((note) => (
-              <li key={note.id} className="border-t border-border pt-4 text-sm">
-                <p className="whitespace-pre-wrap">{note.body}</p>
-                <p className="mt-2 text-xs text-foreground-muted">
-                  {note.author?.name ?? "Unknown"} ·{" "}
-                  {note.createdAt.toLocaleString()}
-                </p>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-6">
+            <NotesList
+              notes={project.notes.map((note) => ({
+                id: note.id,
+                body: note.body,
+                createdAt: note.createdAt,
+                authorName: note.author?.name,
+              }))}
+            />
+          </div>
         </div>
         <div className="rounded-xl border border-border bg-surface/40 p-5">
           <h2 className="mb-4 text-sm font-medium">Activity</h2>

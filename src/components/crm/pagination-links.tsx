@@ -19,6 +19,9 @@ export function PaginationLinks({
   const pages = totalPages(total, pageSize);
   if (pages <= 1) return null;
 
+  const from = (page - 1) * pageSize + 1;
+  const to = Math.min(page * pageSize, total);
+
   function href(target: number) {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(query)) {
@@ -31,25 +34,35 @@ export function PaginationLinks({
   return (
     <nav
       aria-label="Pagination"
-      className="flex items-center justify-between gap-3 text-sm text-foreground-secondary"
+      className="flex flex-wrap items-center justify-between gap-3 text-sm text-foreground-secondary"
     >
-      <p>
-        Page {page} of {pages} · {total} total
+      <p className="text-xs text-foreground-muted">
+        Showing {from}–{to} of {total} · Page {page} of {pages}
       </p>
       <div className="flex gap-2">
         {page > 1 ? (
-          <Link className="underline hover:text-foreground" href={href(page - 1)}>
+          <Link
+            className="rounded-md px-2 py-1 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            href={href(page - 1)}
+          >
             Previous
           </Link>
         ) : (
-          <span className="text-foreground-muted">Previous</span>
+          <span className="rounded-md px-2 py-1 text-foreground-muted" aria-disabled>
+            Previous
+          </span>
         )}
         {page < pages ? (
-          <Link className="underline hover:text-foreground" href={href(page + 1)}>
+          <Link
+            className="rounded-md px-2 py-1 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            href={href(page + 1)}
+          >
             Next
           </Link>
         ) : (
-          <span className="text-foreground-muted">Next</span>
+          <span className="rounded-md px-2 py-1 text-foreground-muted" aria-disabled>
+            Next
+          </span>
         )}
       </div>
     </nav>
