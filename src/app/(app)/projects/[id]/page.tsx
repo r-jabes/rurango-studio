@@ -4,11 +4,12 @@ import { ArchiveButton } from "@/components/crm/archive-button";
 import { MilestoneForm } from "@/components/crm/milestone-form";
 import { NoteForm } from "@/components/crm/note-form";
 import { NotesList } from "@/components/crm/notes-list";
-import { RecordList } from "@/components/crm/record-list";
 import { TaskForm } from "@/components/crm/task-form";
 import { TaskStatusSelect } from "@/components/crm/task-status-select";
 import { DeploymentForm } from "@/components/finance/deployment-form";
+import { DeploymentList } from "@/components/finance/deployment-list";
 import { HandoverForm } from "@/components/finance/handover-form";
+import { HandoverList } from "@/components/finance/handover-list";
 import { QaPanel } from "@/components/finance/qa-panel";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button-link";
@@ -155,36 +156,15 @@ export default async function ProjectDetailPage({
           <h2 className="mb-4 text-sm font-medium">Deployments</h2>
           <DeploymentForm projectId={id} />
           <div className="mt-6">
-            <RecordList
-              items={deployments}
-              emptyLabel="No deployments yet."
-              getKey={(d) => d.id}
-              renderItem={(deployment) => (
-                <div className="border-t border-border pt-3 text-sm">
-                  <p className="font-medium">
-                    {deployment.environment ?? "Deployment"}
-                  </p>
-                  {deployment.url ? (
-                    <a
-                      href={deployment.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="break-all text-accent underline-offset-2 hover:underline"
-                    >
-                      {deployment.url}
-                    </a>
-                  ) : null}
-                  <p className="mt-1 text-xs text-foreground-muted">
-                    {deployment.deployedAt.toLocaleString()} ·{" "}
-                    {deployment.creator?.name ?? "Unknown"}
-                  </p>
-                  {deployment.notes ? (
-                    <p className="mt-1 text-foreground-secondary">
-                      {deployment.notes}
-                    </p>
-                  ) : null}
-                </div>
-              )}
+            <DeploymentList
+              items={deployments.map((deployment) => ({
+                id: deployment.id,
+                environment: deployment.environment,
+                url: deployment.url,
+                notes: deployment.notes,
+                deployedAt: deployment.deployedAt.toISOString(),
+                creatorName: deployment.creator?.name,
+              }))}
             />
           </div>
         </div>
@@ -205,37 +185,16 @@ export default async function ProjectDetailPage({
           <h2 className="mb-4 text-sm font-medium">Handover</h2>
           <HandoverForm projectId={id} />
           <div className="mt-6">
-            <RecordList
-              items={handovers}
-              emptyLabel="No handover records yet."
-              getKey={(h) => h.id}
-              renderItem={(handover) => (
-                <div className="border-t border-border pt-3 text-sm">
-                  <p className="font-medium">
-                    {handover.acceptedByName
-                      ? `Accepted by ${handover.acceptedByName}`
-                      : "Handover note"}
-                  </p>
-                  {handover.acceptedAt ? (
-                    <p className="text-xs text-foreground-muted">
-                      {handover.acceptedAt.toLocaleString()}
-                    </p>
-                  ) : null}
-                  {handover.notes ? (
-                    <p className="mt-1 whitespace-pre-wrap text-foreground-secondary">
-                      {handover.notes}
-                    </p>
-                  ) : null}
-                  {handover.fileStorageKey ? (
-                    <a
-                      href={`/api/handover/${handover.id}/file`}
-                      className="mt-1 inline-block text-accent underline-offset-2 hover:underline"
-                    >
-                      Download artifact
-                    </a>
-                  ) : null}
-                </div>
-              )}
+            <HandoverList
+              items={handovers.map((handover) => ({
+                id: handover.id,
+                acceptedByName: handover.acceptedByName,
+                acceptedAt: handover.acceptedAt
+                  ? handover.acceptedAt.toISOString()
+                  : null,
+                notes: handover.notes,
+                hasFile: Boolean(handover.fileStorageKey),
+              }))}
             />
           </div>
         </div>
@@ -250,7 +209,7 @@ export default async function ProjectDetailPage({
               notes={project.notes.map((note) => ({
                 id: note.id,
                 body: note.body,
-                createdAt: note.createdAt,
+                createdAt: note.createdAt.toISOString(),
                 authorName: note.author?.name,
               }))}
             />
@@ -258,7 +217,14 @@ export default async function ProjectDetailPage({
         </div>
         <div className="rounded-xl border border-border bg-surface/40 p-5">
           <h2 className="mb-4 text-sm font-medium">Activity</h2>
-          <ActivityTimeline items={activity} />
+          <ActivityTimeline
+            items={activity.map((item) => ({
+              id: item.id,
+              type: item.type,
+              summary: item.summary,
+              createdAt: item.createdAt.toISOString(),
+            }))}
+          />
         </div>
       </section>
     </div>

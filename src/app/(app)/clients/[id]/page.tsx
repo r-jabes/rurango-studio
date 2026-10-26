@@ -129,7 +129,7 @@ export default async function ClientDetailPage({
               notes={notes.map((note) => ({
                 id: note.id,
                 body: note.body,
-                createdAt: note.createdAt,
+                createdAt: note.createdAt.toISOString(),
                 authorName: note.author?.name,
               }))}
             />
@@ -138,7 +138,14 @@ export default async function ClientDetailPage({
 
         <div className="rounded-xl border border-border bg-surface/40 p-5">
           <h2 className="mb-4 text-sm font-medium">Activity</h2>
-          <ActivityTimeline items={activity} />
+          <ActivityTimeline
+            items={activity.map((item) => ({
+              id: item.id,
+              type: item.type,
+              summary: item.summary,
+              createdAt: item.createdAt.toISOString(),
+            }))}
+          />
         </div>
       </section>
     </div>

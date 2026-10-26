@@ -75,7 +75,17 @@ export default async function BackupsPage() {
 
       <section className="space-y-3">
         <h2 className="text-sm font-medium">Recent runs</h2>
-        <BackupRunsList runs={runs} />
+        <BackupRunsList
+          runs={runs.map((run) => ({
+            id: run.id,
+            status: run.status,
+            kind: run.kind,
+            startedAt: run.startedAt.toISOString(),
+            destinationRef: run.destinationRef,
+            byteSize: run.byteSize,
+            errorMessage: run.errorMessage,
+          }))}
+        />
       </section>
     </div>
   );

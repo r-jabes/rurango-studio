@@ -141,7 +141,15 @@ export default async function SettingsPage() {
       {role === "owner" ? (
         <section className="rounded-xl border border-border bg-surface/50 p-5">
           <h2 className="mb-3 text-sm font-medium">Recent audit events</h2>
-          <AuditLogList rows={audit} />
+          <AuditLogList
+            rows={audit.map((row) => ({
+              id: row.id,
+              action: row.action,
+              createdAt: row.createdAt.toISOString(),
+              entityType: row.entityType,
+              entityId: row.entityId,
+            }))}
+          />
         </section>
       ) : null}
     </div>
